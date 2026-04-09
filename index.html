@@ -55,7 +55,7 @@ body.drag-over #main::after{ content:'PDF 파일을 여기에 놓으세요'; pos
 
 #vwr{ display:none; position:relative; width:100%; height:100%; align-items:flex-start; justify-content:flex-start; perspective:2200px; overflow:auto; padding:22px 66px 40px; cursor:grab; }
 #vwr.dragging{ cursor:grabbing; user-select:none; }
-#book{ position:relative; display:flex; align-items:stretch; transform-style:preserve-3d; }
+#book{ position:relative; display:flex; align-items:stretch; transform-style:preserve-3d; margin:auto; }
 #book.single{ box-shadow:4px 4px 0 #3a2e22, 8px 8px 0 #2a1e14, 0 20px 60px rgba(0,0,0,.7); }
 #book.spread{ box-shadow:-6px 6px 0 #3a2e22, -12px 12px 0 #2a1e14, 0 20px 60px rgba(0,0,0,.7); }
 .slot{ position:relative; overflow:hidden; background:var(--paper); }
@@ -91,7 +91,7 @@ body.drag-over #main::after{ content:'PDF 파일을 여기에 놓으세요'; pos
 #embed-wrap iframe{ width:100%; height:100%; border:none; background:#fff; }
 #embed-hint{ position:absolute; top:10px; right:10px; z-index:5; background:rgba(0,0,0,.45); color:#f6d6a4; font-size:11px; padding:6px 9px; border-radius:6px; pointer-events:none; }
 
-#progbar{ display:none; }
+#progbar{ display:none; position:fixed; bottom:0; left:0; height:3px; background:linear-gradient(90deg, var(--accent2), var(--accent)); transition:width .4s ease; z-index:100; pointer-events:none; border-radius:0 2px 0 0; }
 #kbh{ position:absolute; bottom:12px; right:16px; font-size:10px; color:var(--muted); pointer-events:none; }
 #ldr{ display:none; position:absolute; inset:0; background:rgba(26,20,16,.92); align-items:center; justify-content:center; flex-direction:column; gap:16px; z-index:400; }
 #ldr.on{ display:flex; }
@@ -169,7 +169,7 @@ body.drag-over #main::after{ content:'PDF 파일을 여기에 놓으세요'; pos
     <h2>Easy book으로<br>PDF를 진짜 책처럼</h2>
     <p>PDF 파일을 선택하거나 드래그해서 놓으세요.<br>한쪽보기/두쪽보기를 언제든 전환할 수 있습니다.</p>
     <label id="file-label-big" for="fi">PDF 파일 선택</label>
-    <p style="font-size:11px;color:#3a2a1a;margin-top:-10px;">또는 URL 입력란에 Google Drive 공유 링크를 붙여넣으세요</p>
+    <p style="font-size:11px;color:var(--muted);margin-top:-10px;">또는 URL 입력란에 Google Drive 공유 링크를 붙여넣으세요</p>
   </div>
 
   <div id="vwr">
@@ -274,6 +274,7 @@ function centerViewer() {
 
 function showEmbedViewer(src) {
   vwr.style.display = 'none';
+  progbar.style.display = 'none';
   embedFrame.src = src;
   embedWrap.style.display = 'block';
   land.style.display = 'none';
@@ -440,6 +441,7 @@ async function openArrayBuffer(ab, sourceURL = '') {
     await renderSpread(0);
     land.style.display = 'none';
     showPDFViewer();
+    progbar.style.display = 'block';
     hideLoader();
     showSuccess(`총 ${total}페이지 · ${spreads.length}개 화면`);
   } catch (e) {
@@ -641,6 +643,22 @@ function stopPan() {
 }
 vwr.addEventListener('pointerup', stopPan);
 vwr.addEventListener('pointercancel', stopPan);
+
+let touchStartX = 0, touchStartY = 0;
+vwr.addEventListener('touchstart', e => {
+  if (zoomF > 1) return;
+  touchStartX = e.changedTouches[0].clientX;
+  touchStartY = e.changedTouches[0].clientY;
+}, { passive: true });
+vwr.addEventListener('touchend', e => {
+  if (zoomF > 1) return;
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+    if (dx < 0) go(curSpread + 1, 'r');
+    else go(curSpread - 1, 'l');
+  }
+}, { passive: true });
 
 function showLoader(msg) { lt.textContent = msg || '로딩 중…'; ldr.classList.add('on'); }
 function hideLoader() { ldr.classList.remove('on'); }
