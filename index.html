@@ -45,7 +45,7 @@ body{ font-family:'Pretendard GOV',sans-serif; background:var(--bg); color:var(-
 .btn:hover{ border-color:var(--accent); color:var(--accent); }
 .btn:disabled{ opacity:.25; cursor:default; pointer-events:none; }
 .btn.on, .icon-btn.on{ background:rgba(200,131,42,.18); border-color:var(--accent); color:var(--accent); }
-.mode-btn{ height:32px; padding:0 10px; font-size:12px; }
+.sep{ width:1px; height:20px; background:#3a2e22; margin:0 2px; flex-shrink:0; }
 #zv{ font-size:12px; min-width:36px; text-align:center; }
 #pi{ font-size:12px; color:var(--muted); white-space:nowrap; margin-left:6px; }
 
@@ -168,18 +168,20 @@ body.drag-over #main::after{ content:'PDF 파일을 여기에 놓으세요'; pos
   <h1>Easy book</h1>
 
   <div class="tb-group">
-    <button class="icon-btn" id="first-btn" title="첫 페이지" aria-label="첫 페이지"><span class="mat">first_page</span></button>
-    <button class="btn mode-btn" id="view-single" title="한쪽보기" aria-label="한쪽보기">한쪽보기</button>
-    <button class="btn mode-btn on" id="view-double" title="두쪽보기" aria-label="두쪽보기">두쪽보기</button>
+    <button class="icon-btn" id="view-single" title="한쪽보기" aria-label="한쪽보기"><span class="mat">article</span></button>
+    <button class="icon-btn on" id="view-double" title="두쪽보기" aria-label="두쪽보기"><span class="mat">auto_stories</span></button>
+    <span class="sep"></span>
     <button class="icon-btn" id="zo" title="축소" aria-label="축소"><span class="mat">zoom_out</span></button>
     <span id="zv">100%</span>
     <button class="icon-btn" id="zi" title="확대" aria-label="확대"><span class="mat">zoom_in</span></button>
     <button class="icon-btn" id="zf" title="화면 맞춤" aria-label="화면 맞춤"><span class="mat">fit_screen</span></button>
-    <button class="icon-btn" id="last-btn" title="끝 페이지" aria-label="끝 페이지"><span class="mat">last_page</span></button>
+    <span class="sep"></span>
+    <button class="icon-btn" id="first-btn" title="첫 페이지" aria-label="첫 페이지"><span class="mat">first_page</span></button>
     <div class="page-jump">
       <input type="number" id="page-input" min="1" step="1" placeholder="페이지">
       <button class="icon-btn" id="page-go" title="페이지 이동" aria-label="페이지 이동"><span class="mat">subdirectory_arrow_right</span></button>
     </div>
+    <button class="icon-btn" id="last-btn" title="끝 페이지" aria-label="끝 페이지"><span class="mat">last_page</span></button>
   </div>
 
   <span id="pi"></span>
