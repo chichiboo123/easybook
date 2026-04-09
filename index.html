@@ -3,170 +3,169 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>📖 eBook Viewer</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600&family=DM+Serif+Display:ital@0;1&family=Noto+Sans+KR:wght@300;400&display=swap" rel="stylesheet">
+<title>Easy book</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-gov.min.css" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231e1812'/%3E%3Cpath d='M14 14h17c5 0 9 4 9 9v27H23c-5 0-9-4-9-9V14Zm36 0H33v36h17V14Z' fill='%23c8832a'/%3E%3Cpath d='M33 14h2v36h-2z' fill='%238b5e2a'/%3E%3C/svg%3E" />
 <style>
 :root{
   --bg:#1a1410; --surface:#231d17; --paper:#fdf6e3;
   --accent:#c8832a; --accent2:#8b5e2a; --spine:#6b3a1f;
-  --ui:#c4a882; --muted:#6b5a45;
+  --ui:#c4a882; --muted:#6b5a45; --good:#7ed9a0;
 }
 *{ margin:0; padding:0; box-sizing:border-box; }
-body{ font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--ui); height:100vh; overflow:hidden; display:flex; flex-direction:column; }
-
-/* ── 툴바 ── */
-#tb{ display:flex; align-items:center; gap:8px; padding:8px 14px; background:var(--surface); border-bottom:1px solid #3a2e22; flex-shrink:0; flex-wrap:wrap; }
-#tb h1{ font-family:'DM Serif Display',serif; font-size:16px; color:var(--accent); margin-right:4px; white-space:nowrap; }
+body{ font-family:'Pretendard GOV',sans-serif; background:radial-gradient(circle at 40% -20%, #3d2f22 0%, var(--bg) 45%); color:var(--ui); height:100vh; overflow:hidden; display:flex; flex-direction:column; }
+#tb{ display:flex; align-items:center; gap:10px; padding:12px 18px; background:rgba(35,29,23,.95); border-bottom:1px solid #3a2e22; flex-shrink:0; flex-wrap:wrap; }
+#tb h1{ font-size:16px; color:var(--accent); margin-right:4px; white-space:nowrap; letter-spacing:.02em; font-weight:700; }
 .sep{ width:1px; height:20px; background:#3a2e22; flex-shrink:0; }
 
-/* 파일 업로드 버튼 — label 방식 (모바일 호환) */
 #file-label{
   display:inline-flex; align-items:center; gap:6px;
   background:var(--accent2); color:#fdf6e3;
   border:none; padding:5px 13px; border-radius:4px;
-  cursor:pointer; font-size:12px; font-family:'Noto Sans KR',sans-serif;
-  transition:background .2s; white-space:nowrap; user-select:none;
+  cursor:pointer; font-size:12px; transition:background .2s; white-space:nowrap; user-select:none;
 }
 #file-label:hover{ background:var(--accent); }
 #fi{ position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
 
-.btn{ background:none; border:1px solid #3a2e22; color:var(--ui); padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-family:'Noto Sans KR',sans-serif; transition:all .2s; white-space:nowrap; }
+.btn{ background:none; border:1px solid #3a2e22; color:var(--ui); padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-family:'Pretendard GOV',sans-serif; transition:all .2s; white-space:nowrap; }
 .btn:hover{ border-color:var(--accent); color:var(--accent); }
 .btn:disabled{ opacity:.25; cursor:default; pointer-events:none; }
+.btn.on{ background:rgba(200,131,42,.18); border-color:var(--accent); color:var(--accent); }
 #zv{ font-size:12px; min-width:36px; text-align:center; }
 #pi{ font-size:12px; color:var(--muted); white-space:nowrap; margin-left:auto; }
 
-/* ── URL 바 ── */
-#ub{ display:flex; align-items:center; gap:8px; padding:6px 14px; background:#1e1812; border-bottom:1px solid #3a2e22; flex-shrink:0; }
+#ub{ display:flex; align-items:center; gap:10px; padding:10px 18px; background:#1e1812; border-bottom:1px solid #3a2e22; flex-shrink:0; }
 #ub label{ font-size:11px; color:var(--muted); white-space:nowrap; }
-#ui{ flex:1; background:var(--surface); border:1px solid #3a2e22; color:var(--ui); padding:5px 10px; border-radius:4px; font-size:12px; font-family:'Noto Sans KR',sans-serif; outline:none; transition:border-color .2s; }
+#ui{ flex:1; background:var(--surface); border:1px solid #3a2e22; color:var(--ui); padding:5px 10px; border-radius:4px; font-size:12px; font-family:'Pretendard GOV',sans-serif; outline:none; transition:border-color .2s; }
 #ui:focus{ border-color:var(--accent); }
 #ui::placeholder{ color:var(--muted); }
-#lub{ background:var(--accent2); border:none; color:#fdf6e3; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:12px; font-family:'Noto Sans KR',sans-serif; transition:background .2s; white-space:nowrap; }
-#lub:hover{ background:var(--accent); }
+#lub,#share-btn,#help-btn{ background:var(--accent2); border:none; color:#fdf6e3; padding:5px 12px; border-radius:4px; cursor:pointer; font-size:12px; font-family:'Pretendard GOV',sans-serif; transition:background .2s; white-space:nowrap; }
+#lub:hover,#share-btn:hover,#help-btn:hover{ background:var(--accent); }
 
-/* ── 메인 ── */
 #main{ flex:1; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
+body.drag-over #main::after{ content:'PDF 파일을 여기에 놓으세요'; position:absolute; inset:0; background:rgba(200,131,42,.15); border:3px dashed var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:20px; color:var(--accent); z-index:500; pointer-events:none; }
 
-/* 드래그 오버 */
-body.drag-over #main::after{
-  content:'PDF 파일을 여기에 놓으세요';
-  position:absolute; inset:0; background:rgba(200,131,42,.15);
-  border:3px dashed var(--accent); border-radius:8px;
-  display:flex; align-items:center; justify-content:center;
-  font-size:20px; color:var(--accent); z-index:500;
-  pointer-events:none;
-}
-
-/* ── 랜딩 ── */
 #land{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; text-align:center; padding:40px; }
 .bi{ font-size:56px; filter:drop-shadow(0 4px 24px rgba(200,131,42,.4)); animation:flt 3s ease-in-out infinite; }
 @keyframes flt{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-8px); } }
-#land h2{ font-family:'DM Serif Display',serif; font-size:25px; color:var(--accent); line-height:1.4; }
+#land h2{ font-size:28px; color:var(--accent); line-height:1.4; letter-spacing:.03em; font-weight:700; }
 #land p{ font-size:13px; color:var(--muted); line-height:1.9; }
-
-/* 랜딩 업로드 버튼도 label */
-#file-label-big{
-  display:inline-flex; align-items:center; gap:8px;
-  background:var(--accent); color:#1a1410;
-  border:none; padding:13px 34px; border-radius:6px;
-  font-size:15px; font-family:'Noto Sans KR',sans-serif;
-  cursor:pointer; transition:all .25s; letter-spacing:.04em; user-select:none;
-}
+#file-label-big{ display:inline-flex; align-items:center; gap:8px; background:var(--accent); color:#1a1410; border:none; padding:13px 34px; border-radius:6px; font-size:15px; cursor:pointer; transition:all .25s; letter-spacing:.04em; user-select:none; }
 #file-label-big:hover{ background:#d99035; transform:translateY(-2px); box-shadow:0 8px 24px rgba(200,131,42,.3); }
 
-/* ── 뷰어 ── */
-#vwr{ display:none; position:relative; width:100%; height:100%; align-items:center; justify-content:center; }
-#book{ position:relative; display:flex; align-items:stretch; }
+#vwr{ display:none; position:relative; width:100%; height:100%; align-items:center; justify-content:center; perspective:2200px; }
+#book{ position:relative; display:flex; align-items:stretch; transform-style:preserve-3d; }
 #book.single{ box-shadow:4px 4px 0 #3a2e22, 8px 8px 0 #2a1e14, 0 20px 60px rgba(0,0,0,.7); }
 #book.spread{ box-shadow:-6px 6px 0 #3a2e22, -12px 12px 0 #2a1e14, 0 20px 60px rgba(0,0,0,.7); }
-
 .slot{ position:relative; overflow:hidden; background:var(--paper); }
 .slot canvas{ display:block; }
-/* 종이 질감 */
+.slot::before{ content:''; position:absolute; inset:0; pointer-events:none; background:linear-gradient(to right, rgba(0,0,0,.10), transparent 14%, transparent 86%, rgba(0,0,0,.08)); mix-blend-mode:multiply; opacity:.35; }
 .slot::after{ content:''; position:absolute; inset:0; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E"); pointer-events:none; opacity:.6; mix-blend-mode:multiply; }
-.pn{ position:absolute; bottom:10px; font-size:10px; color:rgba(100,80,50,.4); font-family:'DM Serif Display',serif; pointer-events:none; user-select:none; }
+.pn{ position:absolute; bottom:10px; font-size:10px; color:rgba(100,80,50,.4); pointer-events:none; user-select:none; }
 .pn.l{ left:14px; } .pn.r{ right:14px; }
 #spl{ position:absolute; top:0; bottom:0; left:50%; width:3px; background:linear-gradient(to bottom,#c8a882,var(--spine),#c8a882); z-index:10; pointer-events:none; display:none; }
-
-/* 네비 버튼 */
 .nav{ position:absolute; top:50%; transform:translateY(-50%); background:rgba(35,29,23,.85); border:1px solid #3a2e22; color:var(--accent); width:44px; height:44px; border-radius:50%; cursor:pointer; font-size:20px; display:flex; align-items:center; justify-content:center; transition:all .2s; z-index:50; backdrop-filter:blur(4px); }
 .nav:hover{ background:var(--accent2); border-color:var(--accent); transform:translateY(-50%) scale(1.08); }
 .nav:disabled{ opacity:.2; cursor:default; pointer-events:none; }
 #pb{ left:12px; } #nb{ right:12px; }
 
-/* 플립 애니 */
-@keyframes fi-r{ from{ opacity:0; transform:perspective(800px) rotateY(-10deg); } to{ opacity:1; transform:none; } }
-@keyframes fi-l{ from{ opacity:0; transform:perspective(800px) rotateY(10deg); } to{ opacity:1; transform:none; } }
-.fx-r{ animation:fi-r .3s ease; } .fx-l{ animation:fi-l .3s ease; }
+.flip-sheet{
+  position:absolute; top:0; height:100%; background:linear-gradient(to right,#fff8dd,#f1dfb8 48%,#dfc495 100%);
+  box-shadow:0 8px 24px rgba(0,0,0,.28); z-index:30; pointer-events:none;
+  backface-visibility:hidden; transform-style:preserve-3d;
+}
+.flip-sheet::after{ content:''; position:absolute; inset:0; background:linear-gradient(to right, rgba(0,0,0,.04), transparent 20%, transparent 78%, rgba(0,0,0,.17)); }
+.flip-sheet.next{ animation:paper-next .42s linear forwards; }
+.flip-sheet.prev{ animation:paper-prev .42s linear forwards; }
+@keyframes paper-next{
+  from{ transform:rotateY(0deg); opacity:.95; }
+  to{ transform:rotateY(-170deg); opacity:.08; }
+}
+@keyframes paper-prev{
+  from{ transform:rotateY(0deg); opacity:.95; }
+  to{ transform:rotateY(170deg); opacity:.08; }
+}
 
-/* 진행바 */
+#embed-wrap{ display:none; position:relative; width:min(1100px,94vw); height:min(85vh,980px); border:1px solid #3a2e22; border-radius:8px; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,.55); background:#100d0b; }
+#embed-wrap iframe{ width:100%; height:100%; border:none; background:#fff; }
+#embed-hint{ position:absolute; top:10px; right:10px; z-index:5; background:rgba(0,0,0,.45); color:#f6d6a4; font-size:11px; padding:6px 9px; border-radius:6px; pointer-events:none; }
+
 #progbar{ position:absolute; bottom:0; left:0; height:2px; background:var(--accent); transition:width .3s; z-index:300; }
 #kbh{ position:absolute; bottom:12px; right:16px; font-size:10px; color:var(--muted); pointer-events:none; }
-
-/* ── 로더 ── */
 #ldr{ display:none; position:absolute; inset:0; background:rgba(26,20,16,.92); align-items:center; justify-content:center; flex-direction:column; gap:16px; z-index:400; }
 #ldr.on{ display:flex; }
 .sp{ width:38px; height:38px; border:3px solid #3a2e22; border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
 @keyframes spin{ to{ transform:rotate(360deg); } }
-#lt{ font-size:13px; color:var(--muted); text-align:center; line-height:1.6; }
+#lt{ font-size:13px; color:var(--muted); text-align:center; line-height:1.6; white-space:pre-line; }
 
-/* ── 에러 토스트 ── */
-#em{ display:none; position:absolute; bottom:20px; left:50%; transform:translateX(-50%); background:#5c2020; color:#f4a0a0; padding:10px 20px; border-radius:6px; font-size:12px; z-index:500; text-align:center; line-height:1.6; max-width:85%; }
-#em.on{ display:block; animation:fdin .3s ease; }
+#em,#sm{ display:none; position:absolute; bottom:20px; left:50%; transform:translateX(-50%); padding:10px 20px; border-radius:6px; font-size:12px; z-index:500; text-align:center; line-height:1.6; max-width:85%; white-space:pre-line; }
+#em{ background:#5c2020; color:#f4a0a0; }
+#sm{ background:#1e4a2a; color:var(--good); }
+#em.on,#sm.on{ display:block; animation:fdin .3s ease; }
 @keyframes fdin{ from{ opacity:0; transform:translateX(-50%) translateY(8px); } to{ opacity:1; transform:translateX(-50%); } }
 
-/* ── 성공 토스트 ── */
-#sm{ display:none; position:absolute; bottom:20px; left:50%; transform:translateX(-50%); background:#1e4a2a; color:#7ed9a0; padding:10px 20px; border-radius:6px; font-size:12px; z-index:500; }
-#sm.on{ display:block; }
+#help-modal{ position:absolute; inset:0; background:rgba(12,10,8,.75); z-index:600; display:none; align-items:center; justify-content:center; padding:20px; }
+#help-modal.on{ display:flex; }
+#help-card{ width:min(680px,96vw); max-height:85vh; overflow:auto; border:1px solid #3a2e22; background:#1f1913; border-radius:10px; padding:20px 18px; box-shadow:0 20px 50px rgba(0,0,0,.45); }
+#help-card h3{ color:var(--accent); margin-bottom:12px; font-size:18px; }
+#help-card ol{ padding-left:18px; color:var(--ui); line-height:1.8; font-size:13px; }
+#help-card li+li{ margin-top:8px; }
+#help-close{ margin-top:14px; }
+
+@media (max-width: 900px){
+  #tb{ padding:12px 12px; gap:8px; }
+  #tb h1{ width:100%; margin-right:0; margin-bottom:2px; font-size:17px; }
+  .sep{ display:none; }
+  .btn, #file-label, #lub, #share-btn, #help-btn{ min-height:36px; padding:7px 10px; font-size:13px; }
+  #ub{ padding:10px 12px; gap:8px; }
+  #ub label{ display:none; }
+  #land{ padding:24px 16px; gap:16px; }
+  #land h2{ font-size:24px; }
+  .nav{ width:50px; height:50px; bottom:14px; top:auto; transform:none; }
+  .nav:hover{ transform:none; }
+  #pb{ left:14px; } #nb{ right:14px; }
+  #kbh{ display:none; }
+  #embed-wrap{ width:96vw; height:78vh; }
+  #embed-hint{ font-size:10px; padding:5px 8px; right:8px; top:8px; }
+}
 </style>
 </head>
 <body>
-
-<!-- ─── 숨김 파일 입력 (label로만 트리거) ─── -->
 <input type="file" id="fi" accept="application/pdf" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;">
 
-<!-- ─── 툴바 ─── -->
 <div id="tb">
-  <h1>📖 eBook Viewer</h1>
+  <h1>Easy book</h1>
   <div class="sep"></div>
-  <!-- ✅ label for="fi" → 모바일에서도 확실히 동작 -->
-  <label id="file-label" for="fi">📂 파일 열기</label>
+  <label id="file-label" for="fi">파일 열기</label>
+  <button class="btn" id="help-btn" title="사용법">사용법</button>
+  <div class="sep"></div>
+  <button class="btn" id="view-single">한쪽보기</button>
+  <button class="btn on" id="view-double">두쪽보기</button>
   <div class="sep"></div>
   <button class="btn" id="zo">−</button>
   <span id="zv">100%</span>
   <button class="btn" id="zi">+</button>
   <button class="btn" id="zf">맞춤</button>
   <div class="sep"></div>
+  <button class="btn" id="share-btn" title="URL 기반으로 공유">공유 링크</button>
   <span id="pi">—</span>
 </div>
 
-<!-- ─── URL 바 ─── -->
 <div id="ub">
-  <label for="ui" style="font-size:11px;color:var(--muted);white-space:nowrap;">🔗 URL</label>
+  <label for="ui">URL</label>
   <input type="text" id="ui" placeholder="Google Drive 공유 링크 또는 직접 PDF URL">
   <button id="lub">불러오기</button>
 </div>
 
-<!-- ─── 메인 ─── -->
 <div id="main">
-
-  <!-- 랜딩 -->
   <div id="land">
     <div class="bi">📚</div>
-    <h2>PDF를 eBook으로<br>아름답게</h2>
-    <p>
-      PDF 파일을 선택하거나 드래그해서 놓으세요.<br>
-      표지·뒷표지는 단면, 본문은 양면 펼침으로 자동 구성됩니다.
-    </p>
-    <!-- ✅ label for="fi" — 버튼처럼 보이지만 실제 label -->
-    <label id="file-label-big" for="fi">📂 PDF 파일 선택</label>
-    <p style="font-size:11px;color:#3a2a1a;margin-top:-10px;">
-      또는 위 URL 입력란에 Google Drive 공유 링크를 붙여넣으세요
-    </p>
+    <h2>Easy book으로<br>PDF를 진짜 책처럼</h2>
+    <p>PDF 파일을 선택하거나 드래그해서 놓으세요.<br>한쪽보기/두쪽보기를 언제든 전환할 수 있습니다.</p>
+    <label id="file-label-big" for="fi">PDF 파일 선택</label>
+    <p style="font-size:11px;color:#3a2a1a;margin-top:-10px;">또는 URL 입력란에 Google Drive 공유 링크를 붙여넣으세요</p>
   </div>
 
-  <!-- 뷰어 -->
   <div id="vwr">
     <div id="book" class="single">
       <div class="slot" id="ls"><canvas id="lc"></canvas><span class="pn l" id="ln"></span></div>
@@ -179,49 +178,88 @@ body.drag-over #main::after{
     <div id="progbar" style="width:0%"></div>
   </div>
 
-  <!-- 로더 -->
-  <div id="ldr"><div class="sp"></div><p id="lt">로딩 중…</p></div>
+  <div id="embed-wrap">
+    <iframe id="embed-frame" title="Google Drive embedded preview"></iframe>
+    <div id="embed-hint">임베드 모드 · 페이지 이동은 Google 뷰어에서 제어됩니다</div>
+  </div>
 
-  <!-- 토스트 -->
+  <div id="ldr"><div class="sp"></div><p id="lt">로딩 중…</p></div>
   <div id="em"></div>
   <div id="sm"></div>
+
+  <div id="help-modal">
+    <div id="help-card">
+      <h3>Easy book 사용법</h3>
+      <ol>
+        <li><b>파일 열기</b>: 상단 <b>파일 열기</b> 버튼으로 PDF를 불러오거나 드래그 앤 드롭하세요.</li>
+        <li><b>URL 열기</b>: Google Drive 공유 링크 또는 PDF 직접 URL을 입력 후 <b>불러오기</b>를 누르세요.</li>
+        <li><b>보기 모드</b>: <b>한쪽보기</b>/<b>두쪽보기</b>로 전환할 수 있고, 표지·뒷표지는 항상 단면으로 표시됩니다.</li>
+        <li><b>넘기기</b>: 좌/우 화살표 버튼 또는 키보드 <b>← →</b>로 페이지를 넘길 수 있습니다.</li>
+        <li><b>공유 링크</b>: URL로 연 문서는 <b>공유 링크</b> 버튼으로 같은 eBook 링크를 복사해 공유할 수 있습니다.</li>
+        <li><b>Drive 실패 시</b>: 브라우저 CORS/쿠키 정책 때문에 PDF.js 로딩이 막히면 자동으로 Drive 임베드 뷰어로 전환됩니다. (임베드에서는 페이지 이동을 Google 뷰어가 직접 처리)</li>
+      </ol>
+      <button class="btn" id="help-close">닫기</button>
+    </div>
+  </div>
 </div>
 
-<!-- ─── PDF.js ─── -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script>
-// ── PDF.js workerSrc: 반드시 같은 버전 ──
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+const PROXY_URL = "https://easybook-proxy.wchisu.workers.dev/?url=";
 
-// ── 요소 참조 ──
-const land    = document.getElementById('land');
-const vwr     = document.getElementById('vwr');
-const book    = document.getElementById('book');
-const ls      = document.getElementById('ls'),   rs  = document.getElementById('rs');
-const lc      = document.getElementById('lc'),   rc  = document.getElementById('rc');
-const spl     = document.getElementById('spl');
-const ln      = document.getElementById('ln'),   rn  = document.getElementById('rn');
-const pb      = document.getElementById('pb'),   nb  = document.getElementById('nb');
-const pi      = document.getElementById('pi');
-const ldr     = document.getElementById('ldr'),  lt  = document.getElementById('lt');
-const zv      = document.getElementById('zv');
-const fi      = document.getElementById('fi');
-const uiEl    = document.getElementById('ui');
+const land = document.getElementById('land');
+const vwr = document.getElementById('vwr');
+const book = document.getElementById('book');
+const ls = document.getElementById('ls'), rs = document.getElementById('rs');
+const lc = document.getElementById('lc'), rc = document.getElementById('rc');
+const spl = document.getElementById('spl');
+const ln = document.getElementById('ln'), rn = document.getElementById('rn');
+const pb = document.getElementById('pb'), nb = document.getElementById('nb');
+const pi = document.getElementById('pi');
+const ldr = document.getElementById('ldr'), lt = document.getElementById('lt');
+const zv = document.getElementById('zv');
+const fi = document.getElementById('fi');
+const uiEl = document.getElementById('ui');
 const progbar = document.getElementById('progbar');
-const emEl    = document.getElementById('em');
-const smEl    = document.getElementById('sm');
+const emEl = document.getElementById('em');
+const smEl = document.getElementById('sm');
+const singleBtn = document.getElementById('view-single');
+const doubleBtn = document.getElementById('view-double');
+const shareBtn = document.getElementById('share-btn');
+const helpModal = document.getElementById('help-modal');
+const embedWrap = document.getElementById('embed-wrap');
+const embedFrame = document.getElementById('embed-frame');
 
-// ── 상태 ──
 let pdfDoc = null, total = 0, curSpread = 0, spreads = [];
 let baseScale = 1, zoomF = 1, busy = false;
+let viewMode = 'double';
+let loadedSourceURL = '';
 
-// ════════════════════════════════════
-// 스프레드 계산
-// ════════════════════════════════════
-function buildSpreads(n) {
+function showPDFViewer() {
+  embedWrap.style.display = 'none';
+  vwr.style.display = 'flex';
+}
+
+function showEmbedViewer(src) {
+  vwr.style.display = 'none';
+  embedFrame.src = src;
+  embedWrap.style.display = 'block';
+  land.style.display = 'none';
+}
+
+function buildSpreads(n, mode = 'double') {
   const s = [];
   if (n < 1) return s;
+
+  if (mode === 'single') {
+    for (let p = 1; p <= n; p++) {
+      const type = p === 1 ? 'cover' : p === n ? 'back' : 'single';
+      s.push({ type, pages:[p] });
+    }
+    return s;
+  }
+
   s.push({ type:'cover', pages:[1] });
   if (n === 1) return s;
   const body = [];
@@ -235,19 +273,44 @@ function buildSpreads(n) {
   return s;
 }
 
-// ════════════════════════════════════
-// 렌더
-// ════════════════════════════════════
 async function renderPage(canvas, num) {
   if (!num || num < 1 || num > total) { canvas.width = 0; canvas.height = 0; return; }
   const pg = await pdfDoc.getPage(num);
   const vp = pg.getViewport({ scale: baseScale * zoomF });
-  canvas.width  = vp.width;
+  canvas.width = vp.width;
   canvas.height = vp.height;
   await pg.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
 }
 
-async function renderSpread(idx, dir) {
+function playFlip(dir) {
+  return new Promise(resolve => {
+    const rect = book.getBoundingClientRect();
+    if (!rect.width || !rect.height) return resolve();
+
+    const singleLike = book.classList.contains('single');
+    const pageWidth = singleLike ? rect.width : rect.width / 2;
+    const sheet = document.createElement('div');
+    sheet.className = `flip-sheet ${dir === 'r' ? 'next' : 'prev'}`;
+    sheet.style.width = `${pageWidth}px`;
+    sheet.style.height = `${rect.height}px`;
+
+    if (dir === 'r') {
+      sheet.style.left = singleLike ? '0px' : `${pageWidth}px`;
+      sheet.style.transformOrigin = 'left center';
+    } else {
+      sheet.style.left = '0px';
+      sheet.style.transformOrigin = 'right center';
+    }
+
+    book.appendChild(sheet);
+    sheet.addEventListener('animationend', () => {
+      sheet.remove();
+      resolve();
+    }, { once:true });
+  });
+}
+
+async function renderSpread(idx) {
   if (idx < 0 || idx >= spreads.length) return;
   const sp = spreads[idx];
   const single = (sp.type === 'cover' || sp.type === 'back' || sp.pages.length === 1);
@@ -255,34 +318,25 @@ async function renderSpread(idx, dir) {
   if (single) {
     book.className = 'single';
     spl.style.display = 'none';
-    ls.style.display  = 'none';
-    rs.style.display  = 'block';
+    ls.style.display = 'none';
+    rs.style.display = 'block';
     await renderPage(rc, sp.pages[0]);
-    rs.style.width  = rc.width  + 'px';
+    rs.style.width = rc.width + 'px';
     rs.style.height = rc.height + 'px';
     rn.textContent = sp.type === 'cover' ? '표지' : sp.type === 'back' ? '뒷표지' : sp.pages[0];
     ln.textContent = '';
   } else {
     book.className = 'spread';
     spl.style.display = 'block';
-    ls.style.display  = 'block';
-    rs.style.display  = 'block';
-    await Promise.all([
-      renderPage(lc, sp.pages[0]),
-      renderPage(rc, sp.pages[1] || null)
-    ]);
+    ls.style.display = 'block';
+    rs.style.display = 'block';
+    await Promise.all([renderPage(lc, sp.pages[0]), renderPage(rc, sp.pages[1] || null)]);
     const h = Math.max(lc.height, rc.height);
-    ls.style.width  = lc.width  + 'px'; ls.style.height = h + 'px';
-    rs.style.width  = rc.width  + 'px'; rs.style.height = h + 'px';
+    ls.style.width = lc.width + 'px'; ls.style.height = h + 'px';
+    rs.style.width = rc.width + 'px'; rs.style.height = h + 'px';
     spl.style.height = h + 'px';
     ln.textContent = sp.pages[0];
     rn.textContent = sp.pages[1] || '';
-  }
-
-  if (dir) {
-    const cls = dir === 'r' ? 'fx-r' : 'fx-l';
-    book.classList.add(cls);
-    book.addEventListener('animationend', () => book.classList.remove(cls), { once:true });
   }
 
   pb.disabled = (idx === 0);
@@ -294,56 +348,75 @@ async function renderSpread(idx, dir) {
   pi.textContent = `${lbl}  (${idx + 1}/${spreads.length})`;
 }
 
-// ════════════════════════════════════
-// 이동
-// ════════════════════════════════════
 async function go(idx, dir) {
   if (busy || idx < 0 || idx >= spreads.length) return;
-  busy = true; curSpread = idx;
-  await renderSpread(idx, dir);
+  busy = true;
+  if (dir) await playFlip(dir);
+  curSpread = idx;
+  await renderSpread(idx);
   busy = false;
 }
+
 pb.addEventListener('click', () => go(curSpread - 1, 'l'));
 nb.addEventListener('click', () => go(curSpread + 1, 'r'));
 document.addEventListener('keydown', e => {
-  if      (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(curSpread + 1, 'r');
-  else if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   go(curSpread - 1, 'l');
+  if (vwr.style.display === 'flex') {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(curSpread + 1, 'r');
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') go(curSpread - 1, 'l');
+  }
+  if (e.key === 'Escape') helpModal.classList.remove('on');
 });
 
-// ════════════════════════════════════
-// 줌
-// ════════════════════════════════════
 function applyZoom() { zv.textContent = Math.round(zoomF * 100) + '%'; renderSpread(curSpread); }
 document.getElementById('zi').addEventListener('click', () => { zoomF = Math.min(zoomF + .15, 2.5); applyZoom(); });
-document.getElementById('zo').addEventListener('click', () => { zoomF = Math.max(zoomF - .15, .4);  applyZoom(); });
+document.getElementById('zo').addEventListener('click', () => { zoomF = Math.max(zoomF - .15, .4); applyZoom(); });
 document.getElementById('zf').addEventListener('click', () => { zoomF = 1; applyZoom(); });
 
-// ════════════════════════════════════
-// PDF 초기화 (ArrayBuffer → PDF.js)
-// ════════════════════════════════════
-async function openArrayBuffer(ab) {
+function spreadOfPage(pageNumber) {
+  const idx = spreads.findIndex(s => s.pages.includes(pageNumber));
+  return idx >= 0 ? idx : 0;
+}
+
+function setViewMode(mode) {
+  if (mode !== 'single' && mode !== 'double') return;
+  viewMode = mode;
+  singleBtn.classList.toggle('on', mode === 'single');
+  doubleBtn.classList.toggle('on', mode === 'double');
+
+  if (!pdfDoc || total < 1) return;
+
+  const pageAnchor = spreads[curSpread]?.pages[0] || 1;
+  spreads = buildSpreads(total, viewMode);
+  curSpread = spreadOfPage(pageAnchor);
+  renderSpread(curSpread);
+}
+singleBtn.addEventListener('click', () => setViewMode('single'));
+doubleBtn.addEventListener('click', () => setViewMode('double'));
+
+async function openArrayBuffer(ab, sourceURL = '') {
   showLoader('PDF 렌더링 중…');
   try {
     const doc = await pdfjsLib.getDocument({ data: ab }).promise;
     pdfDoc = doc;
-    total  = doc.numPages;
-    spreads = buildSpreads(total);
-    curSpread = 0; zoomF = 1;
+    total = doc.numPages;
+    spreads = buildSpreads(total, viewMode);
+    curSpread = 0;
+    zoomF = 1;
+    loadedSourceURL = sourceURL;
 
-    // 기준 스케일 계산
     const pg0 = await pdfDoc.getPage(1);
     const vp0 = pg0.getViewport({ scale: 1 });
     const mainEl = document.getElementById('main');
     const mh = mainEl.clientHeight * 0.88;
-    const mw = (mainEl.clientWidth - 160) * 0.46;
+    const mw = (mainEl.clientWidth - 160) * (viewMode === 'double' ? 0.46 : 0.68);
     baseScale = Math.min(mh / vp0.height, mw / vp0.width, 1.8);
     zv.textContent = '100%';
 
     await renderSpread(0);
     land.style.display = 'none';
-    vwr.style.display  = 'flex';
+    showPDFViewer();
     hideLoader();
-    showSuccess(`총 ${total}페이지 · ${spreads.length}개 스프레드`);
+    showSuccess(`총 ${total}페이지 · ${spreads.length}개 화면`);
   } catch (e) {
     hideLoader();
     showErr('PDF 열기 실패: ' + (e.message || String(e)));
@@ -351,27 +424,21 @@ async function openArrayBuffer(ab) {
   }
 }
 
-// ════════════════════════════════════
-// 파일 입력 처리 (label for="fi" 방식)
-// ════════════════════════════════════
 fi.addEventListener('change', function() {
   const file = this.files[0];
   if (!file) return;
   if (file.type !== 'application/pdf') { showErr('PDF 파일만 지원합니다.'); return; }
+  loadedSourceURL = '';
   const reader = new FileReader();
-  reader.onload  = e => openArrayBuffer(e.target.result);
+  reader.onload = e => openArrayBuffer(e.target.result, '');
   reader.onerror = () => showErr('파일 읽기 실패');
   showLoader('파일 읽는 중…');
   reader.readAsArrayBuffer(file);
-  // 같은 파일 재선택 가능하게 초기화
   this.value = '';
 });
 
-// ════════════════════════════════════
-// 드래그 앤 드롭
-// ════════════════════════════════════
 document.body.addEventListener('dragenter', e => { e.preventDefault(); document.body.classList.add('drag-over'); });
-document.body.addEventListener('dragover',  e => { e.preventDefault(); });
+document.body.addEventListener('dragover', e => { e.preventDefault(); });
 document.body.addEventListener('dragleave', e => { if (!e.relatedTarget) document.body.classList.remove('drag-over'); });
 document.body.addEventListener('drop', e => {
   e.preventDefault();
@@ -379,50 +446,101 @@ document.body.addEventListener('drop', e => {
   const file = e.dataTransfer.files[0];
   if (!file) return;
   if (file.type !== 'application/pdf') { showErr('PDF 파일만 지원합니다.'); return; }
+  loadedSourceURL = '';
   const reader = new FileReader();
-  reader.onload = ev => openArrayBuffer(ev.target.result);
+  reader.onload = ev => openArrayBuffer(ev.target.result, '');
   reader.onerror = () => showErr('파일 읽기 실패');
   showLoader('파일 읽는 중…');
   reader.readAsArrayBuffer(file);
 });
 
-// ════════════════════════════════════
-// URL 로드 (Google Drive 포함)
-// 로컬 fetch CORS 우회 불가능 → 안내 메시지 포함
-// ════════════════════════════════════
+function extractDriveId(url) {
+  const patterns = [
+    /drive\.google\.com\/file\/d\/([^/?#\s]+)/,
+    /drive\.google\.com\/open\?id=([^&#\s]+)/,
+    /drive\.google\.com\/uc\?(?:.*&)?id=([^&#\s]+)/,
+    /docs\.google\.com\/uc\?(?:.*&)?id=([^&#\s]+)/
+  ];
+  for (const p of patterns) {
+    const m = url.match(p);
+    if (m) return m[1];
+  }
+  return '';
+}
+
 function toDirectURL(raw) {
   const url = raw.trim();
-  // Google Drive /file/d/ID/view → uc?export=download
-  const m = url.match(/drive\.google\.com\/file\/d\/([^/?#\s]+)/);
-  if (m) return { url: `https://drive.google.com/uc?export=download&id=${m[1]}`, isGdrive: true };
-  if (url.includes('drive.google.com/uc')) return { url, isGdrive: true };
-  return { url, isGdrive: false };
+  const driveId = extractDriveId(url);
+  if (driveId) {
+    return {
+      url: `https://drive.google.com/uc?export=download&id=${driveId}`,
+      isGdrive: true,
+      driveId,
+      shareableRaw: `https://drive.google.com/file/d/${driveId}/view`
+    };
+  }
+  return { url, isGdrive: false, driveId:'', shareableRaw: url };
+}
+
+async function fetchAsArrayBuffer(url, isGdrive) {
+  const finalUrl = PROXY_URL + encodeURIComponent(url);
+  const response = await fetch(finalUrl, {
+    mode: 'cors',
+    credentials: 'omit',
+    cache: 'no-store'
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('pdf') && !isGdrive) {
+    showErr('주의: PDF 응답이 아닐 수 있습니다. 계속 시도합니다.');
+  }
+  return response.arrayBuffer();
+}
+
+function openDriveEmbedById(driveId, rawUrlForShare) {
+  const embedURL = `https://drive.google.com/file/d/${driveId}/preview`;
+  loadedSourceURL = rawUrlForShare;
+  land.style.display = 'none';
+  showEmbedViewer(embedURL);
+  pi.textContent = 'Google Drive 임베드 보기';
+  showSuccess('브라우저 정책으로 PDF.js 로드가 막혀 임베드 모드로 전환했습니다.');
 }
 
 async function loadFromURL() {
   const raw = uiEl.value.trim();
   if (!raw) return;
-  const { url, isGdrive } = toDirectURL(raw);
+  const { url, isGdrive, driveId, shareableRaw } = toDirectURL(raw);
 
   showLoader(isGdrive
-    ? 'Google Drive에서 다운로드 중…\n(공유 설정: 링크가 있는 모든 사용자)'
+    ? 'Google Drive에서 파일 확인 중…\n(공유 설정: 링크가 있는 모든 사용자)'
     : 'PDF 다운로드 중…');
 
   try {
-    const res = await fetch(url, { mode: 'cors' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const ab = await res.arrayBuffer();
-    await openArrayBuffer(ab);
+    const ab = await fetchAsArrayBuffer(url, isGdrive);
+    await openArrayBuffer(ab, shareableRaw);
   } catch (e) {
     hideLoader();
+    const msg = (e && e.message) ? String(e.message) : '';
+    if (msg.includes('HTTP 403')) {
+      showErr(
+        '프록시 403 오류: Worker의 ALLOWED_DOMAIN 설정을 현재 앱 도메인과 일치시켜주세요.\n' +
+        '예) https://easybook.chichiboo.link 또는 로컬 개발 주소를 추가 허용'
+      );
+      return;
+    }
+    if (isGdrive && driveId) {
+      openDriveEmbedById(driveId, shareableRaw);
+      return;
+    }
     if (isGdrive) {
       showErr(
-        'Google Drive CORS 오류\n' +
-        '① Drive 파일 공유: "링크가 있는 모든 사용자"\n' +
-        '② 또는 파일을 직접 업로드해주세요 (📂 파일 열기)'
+        'Google Drive 링크 불러오기 실패\n' +
+        '① 파일 공유를 "링크가 있는 모든 사용자"로 설정\n' +
+        '② PDF 원본 링크인지 확인\n' +
+        '③ 계속 실패하면 로컬 파일 업로드를 사용'
       );
     } else {
-      showErr('URL 로드 실패: ' + (e.message || '서버가 CORS를 허용하지 않습니다.'));
+      showErr('URL 로드 실패: ' + (e.message || '서버 CORS 설정을 확인하세요.'));
     }
     console.error(e);
   }
@@ -431,26 +549,60 @@ async function loadFromURL() {
 document.getElementById('lub').addEventListener('click', loadFromURL);
 uiEl.addEventListener('keydown', e => { if (e.key === 'Enter') loadFromURL(); });
 
-// ?pdf= 파라미터 자동 로드
-const qp = new URLSearchParams(location.search).get('pdf');
-if (qp) { uiEl.value = qp; loadFromURL(); }
+function currentShareLink() {
+  if (!loadedSourceURL) return '';
+  const share = new URL(location.href);
+  share.searchParams.set('pdf', loadedSourceURL);
+  share.searchParams.set('view', viewMode);
+  share.searchParams.set('s', String(curSpread));
+  return share.toString();
+}
 
-// ════════════════════════════════════
-// UI 헬퍼
-// ════════════════════════════════════
+shareBtn.addEventListener('click', async () => {
+  const link = currentShareLink();
+  if (!link) {
+    showErr('공유 링크는 URL로 불러온 PDF에서만 생성됩니다.');
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(link);
+    showSuccess('공유 링크를 복사했습니다. 상대방이 같은 eBook을 바로 열 수 있습니다.');
+  } catch {
+    showErr('클립보드 복사 실패. 링크를 수동으로 복사해주세요:\n' + link);
+  }
+});
+
+const qp = new URLSearchParams(location.search);
+const initialPDF = qp.get('pdf');
+const initialView = qp.get('view');
+if (initialView === 'single' || initialView === 'double') setViewMode(initialView);
+if (initialPDF) {
+  uiEl.value = initialPDF;
+  loadFromURL().then(() => {
+    if (vwr.style.display === 'flex') {
+      const s = Number(qp.get('s'));
+      if (!Number.isNaN(s) && spreads[s]) go(s);
+    }
+  });
+}
+
+document.getElementById('help-btn').addEventListener('click', () => helpModal.classList.add('on'));
+document.getElementById('help-close').addEventListener('click', () => helpModal.classList.remove('on'));
+helpModal.addEventListener('click', (e) => { if (e.target === helpModal) helpModal.classList.remove('on'); });
+
 function showLoader(msg) { lt.textContent = msg || '로딩 중…'; ldr.classList.add('on'); }
-function hideLoader()    { ldr.classList.remove('on'); }
-
+function hideLoader() { ldr.classList.remove('on'); }
 let etimer;
 function showErr(msg) {
-  emEl.textContent = msg; emEl.className = 'on';
+  emEl.textContent = msg;
+  emEl.className = 'on';
   clearTimeout(etimer);
   etimer = setTimeout(() => emEl.className = '', 8000);
 }
-
 let stimer;
 function showSuccess(msg) {
-  smEl.textContent = msg; smEl.className = 'on';
+  smEl.textContent = msg;
+  smEl.className = 'on';
   clearTimeout(stimer);
   stimer = setTimeout(() => smEl.className = '', 3000);
 }
