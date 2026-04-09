@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Easy book</title>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-gov.min.css" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,0,0" />
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231e1812'/%3E%3Cpath d='M14 14h17c5 0 9 4 9 9v27H23c-5 0-9-4-9-9V14Zm36 0H33v36h17V14Z' fill='%23c8832a'/%3E%3Cpath d='M33 14h2v36h-2z' fill='%238b5e2a'/%3E%3C/svg%3E" />
 <style>
 :root{
@@ -12,35 +13,42 @@
   --accent:#c8832a; --accent2:#8b5e2a; --spine:#6b3a1f;
   --ui:#c4a882; --muted:#6b5a45; --good:#7ed9a0;
 }
-*{ margin:0; padding:0; box-sizing:border-box; }
-body{ font-family:'Pretendard GOV',sans-serif; background:radial-gradient(circle at 40% -20%, #3d2f22 0%, var(--bg) 45%); color:var(--ui); height:100vh; overflow:hidden; display:flex; flex-direction:column; }
-#tb{ display:flex; align-items:center; gap:10px; padding:12px 18px; background:rgba(35,29,23,.95); border-bottom:1px solid #3a2e22; flex-shrink:0; flex-wrap:wrap; }
-#tb h1{ font-size:16px; color:var(--accent); margin-right:4px; white-space:nowrap; letter-spacing:.02em; font-weight:700; }
-.sep{ width:1px; height:20px; background:#3a2e22; flex-shrink:0; }
-
-#file-label{
-  display:inline-flex; align-items:center; gap:6px;
-  background:var(--accent2); color:#fdf6e3;
-  border:none; padding:5px 13px; border-radius:4px;
-  cursor:pointer; font-size:12px; transition:background .2s; white-space:nowrap; user-select:none;
+body.light{
+  --bg:#f2eee8; --surface:#fffaf2; --paper:#ffffff;
+  --accent:#9c5e17; --accent2:#bd7a2d; --spine:#bb8b5a;
+  --ui:#5a4530; --muted:#8a7156;
 }
-#file-label:hover{ background:var(--accent); }
+*{ margin:0; padding:0; box-sizing:border-box; }
+body{ font-family:'Pretendard GOV',sans-serif; background:radial-gradient(circle at 40% -20%, color-mix(in srgb, var(--accent2) 35%, transparent) 0%, var(--bg) 45%); color:var(--ui); height:100vh; overflow:hidden; display:flex; flex-direction:column; }
+#tb{ display:flex; align-items:center; gap:10px; padding:12px 18px; background:rgba(35,29,23,.95); border-bottom:1px solid #3a2e22; flex-shrink:0; }
+#tb h1{ font-size:16px; color:var(--accent); margin-right:6px; white-space:nowrap; letter-spacing:.02em; font-weight:700; }
+.tb-group{ display:flex; align-items:center; gap:6px; }
+.tb-spacer{ flex:1; }
+.mat{ font-family:'Material Symbols Rounded'; font-weight:500; font-style:normal; font-size:18px; line-height:1; display:inline-flex; align-items:center; justify-content:center; }
+.icon-btn, #file-label{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:34px; height:32px; border-radius:6px; border:1px solid #3a2e22;
+  background:none; color:var(--ui); cursor:pointer; transition:all .2s;
+}
+.icon-btn:hover, #file-label:hover{ border-color:var(--accent); color:var(--accent); }
+#file-label{ background:var(--accent2); color:#fdf6e3; border:none; }
+#file-label:hover{ background:var(--accent); color:#1a1410; }
 #fi{ position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
 
 .btn{ background:none; border:1px solid #3a2e22; color:var(--ui); padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-family:'Pretendard GOV',sans-serif; transition:all .2s; white-space:nowrap; }
 .btn:hover{ border-color:var(--accent); color:var(--accent); }
 .btn:disabled{ opacity:.25; cursor:default; pointer-events:none; }
-.btn.on{ background:rgba(200,131,42,.18); border-color:var(--accent); color:var(--accent); }
+.btn.on, .icon-btn.on{ background:rgba(200,131,42,.18); border-color:var(--accent); color:var(--accent); }
 #zv{ font-size:12px; min-width:36px; text-align:center; }
-#pi{ font-size:12px; color:var(--muted); white-space:nowrap; margin-left:auto; }
+#pi{ font-size:12px; color:var(--muted); white-space:nowrap; margin-left:6px; }
 
-#ub{ display:flex; align-items:center; gap:10px; padding:10px 18px; background:#1e1812; border-bottom:1px solid #3a2e22; flex-shrink:0; }
+#ub{ display:flex; align-items:center; gap:10px; padding:10px 18px; background:color-mix(in srgb, var(--surface) 80%, #000 20%); border-bottom:1px solid #3a2e22; flex-shrink:0; }
 #ub label{ font-size:11px; color:var(--muted); white-space:nowrap; }
 #ui{ flex:1; background:var(--surface); border:1px solid #3a2e22; color:var(--ui); padding:5px 10px; border-radius:4px; font-size:12px; font-family:'Pretendard GOV',sans-serif; outline:none; transition:border-color .2s; }
 #ui:focus{ border-color:var(--accent); }
 #ui::placeholder{ color:var(--muted); }
-#lub,#share-btn,#help-btn{ background:var(--accent2); border:none; color:#fdf6e3; padding:5px 12px; border-radius:4px; cursor:pointer; font-size:12px; font-family:'Pretendard GOV',sans-serif; transition:background .2s; white-space:nowrap; }
-#lub:hover,#share-btn:hover,#help-btn:hover{ background:var(--accent); }
+#lub{ background:var(--accent2); border:none; color:#fdf6e3; padding:5px 12px; border-radius:4px; cursor:pointer; font-size:12px; font-family:'Pretendard GOV',sans-serif; transition:background .2s; white-space:nowrap; }
+#lub:hover{ background:var(--accent); }
 
 #main{ flex:1; min-height:0; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
 body.drag-over #main::after{ content:'PDF 파일을 여기에 놓으세요'; position:absolute; inset:0; background:rgba(200,131,42,.15); border:3px dashed var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:20px; color:var(--accent); z-index:500; pointer-events:none; }
@@ -53,7 +61,8 @@ body.drag-over #main::after{ content:'PDF 파일을 여기에 놓으세요'; pos
 #file-label-big{ display:inline-flex; align-items:center; gap:8px; background:var(--accent); color:#1a1410; border:none; padding:13px 34px; border-radius:6px; font-size:15px; cursor:pointer; transition:all .25s; letter-spacing:.04em; user-select:none; }
 #file-label-big:hover{ background:#d99035; transform:translateY(-2px); box-shadow:0 8px 24px rgba(200,131,42,.3); }
 
-#vwr{ display:none; position:relative; width:100%; height:100%; align-items:flex-start; justify-content:flex-start; perspective:2200px; overflow:auto; padding:22px 66px 40px; cursor:grab; }
+#vwr{ display:none; position:relative; width:100%; height:100%; align-items:flex-start; justify-content:flex-start; perspective:2200px; overflow:auto; padding:22px 66px 40px; cursor:grab; scrollbar-width:none; }
+#vwr::-webkit-scrollbar{ width:0; height:0; }
 #vwr.dragging{ cursor:grabbing; user-select:none; }
 #book{ position:relative; display:flex; align-items:stretch; transform-style:preserve-3d; margin:auto; }
 #book.single{ box-shadow:4px 4px 0 #3a2e22, 8px 8px 0 #2a1e14, 0 20px 60px rgba(0,0,0,.7); }
@@ -120,7 +129,7 @@ body.drag-over #main::after{ content:'PDF 파일을 여기에 놓으세요'; pos
   #tb{ padding:12px 12px; gap:8px; }
   #tb h1{ width:100%; margin-right:0; margin-bottom:2px; font-size:17px; }
   .sep{ display:none; }
-  .btn, #file-label, #lub, #share-btn, #help-btn{ min-height:36px; padding:7px 10px; font-size:13px; }
+  .btn, #file-label, #lub, .icon-btn{ min-height:36px; padding:7px 10px; font-size:13px; }
   #ub{ padding:10px 12px; gap:8px; }
   #ub label{ display:none; }
   #land{ padding:24px 16px; gap:16px; }
@@ -141,20 +150,26 @@ body.drag-over #main::after{ content:'PDF 파일을 여기에 놓으세요'; pos
 
 <div id="tb">
   <h1>Easy book</h1>
-  <div class="sep"></div>
-  <label id="file-label" for="fi">파일 열기</label>
-  <button class="btn" id="help-btn" title="사용법">사용법</button>
-  <div class="sep"></div>
-  <button class="btn" id="view-single">한쪽보기</button>
-  <button class="btn on" id="view-double">두쪽보기</button>
-  <div class="sep"></div>
-  <button class="btn" id="zo">−</button>
-  <span id="zv">100%</span>
-  <button class="btn" id="zi">+</button>
-  <button class="btn" id="zf">맞춤</button>
-  <div class="sep"></div>
-  <button class="btn" id="share-btn" title="URL 기반으로 공유">공유 링크</button>
+
+  <div class="tb-group">
+    <button class="icon-btn" id="view-single" title="한쪽보기" aria-label="한쪽보기"><span class="mat">crop_portrait</span></button>
+    <button class="icon-btn on" id="view-double" title="두쪽보기" aria-label="두쪽보기"><span class="mat">view_week</span></button>
+    <button class="icon-btn" id="zo" title="축소" aria-label="축소"><span class="mat">zoom_out</span></button>
+    <span id="zv">100%</span>
+    <button class="icon-btn" id="zi" title="확대" aria-label="확대"><span class="mat">zoom_in</span></button>
+    <button class="icon-btn" id="zf" title="화면 맞춤" aria-label="화면 맞춤"><span class="mat">fit_screen</span></button>
+  </div>
+
   <span id="pi">—</span>
+
+  <div class="tb-spacer"></div>
+
+  <div class="tb-group">
+    <label id="file-label" for="fi" title="파일 열기" aria-label="파일 열기"><span class="mat">folder_open</span></label>
+    <button class="icon-btn" id="share-btn" title="공유 링크 생성" aria-label="공유 링크 생성"><span class="mat">share</span></button>
+    <button class="icon-btn" id="theme-btn" title="다크/라이트 모드" aria-label="다크/라이트 모드"><span class="mat" id="theme-icon">dark_mode</span></button>
+    <button class="icon-btn" id="help-btn" title="사용법" aria-label="사용법"><span class="mat">help</span></button>
+  </div>
 </div>
 
 <div id="ub">
@@ -237,6 +252,8 @@ const smEl = document.getElementById('sm');
 const singleBtn = document.getElementById('view-single');
 const doubleBtn = document.getElementById('view-double');
 const shareBtn = document.getElementById('share-btn');
+const themeBtn = document.getElementById('theme-btn');
+const themeIcon = document.getElementById('theme-icon');
 const helpModal = document.getElementById('help-modal');
 const embedWrap = document.getElementById('embed-wrap');
 const embedFrame = document.getElementById('embed-frame');
@@ -424,6 +441,20 @@ async function setViewMode(mode) {
 singleBtn.addEventListener('click', () => { setViewMode('single'); });
 doubleBtn.addEventListener('click', () => { setViewMode('double'); });
 
+function applyTheme(theme) {
+  const isLight = theme === 'light';
+  document.body.classList.toggle('light', isLight);
+  themeIcon.textContent = isLight ? 'light_mode' : 'dark_mode';
+}
+
+function toggleTheme() {
+  const next = document.body.classList.contains('light') ? 'dark' : 'light';
+  localStorage.setItem('easybook-theme', next);
+  applyTheme(next);
+}
+
+themeBtn.addEventListener('click', toggleTheme);
+
 async function openArrayBuffer(ab, sourceURL = '') {
   showLoader('PDF 렌더링 중…');
   try {
@@ -598,6 +629,8 @@ shareBtn.addEventListener('click', async () => {
     showErr('클립보드 복사 실패. 링크를 수동으로 복사해주세요:\n' + link);
   }
 });
+
+applyTheme(localStorage.getItem('easybook-theme') || 'dark');
 
 const qp = new URLSearchParams(location.search);
 const initialPDF = qp.get('pdf');
