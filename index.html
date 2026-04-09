@@ -484,7 +484,11 @@ function toDirectURL(raw) {
 
 async function fetchAsArrayBuffer(url, isGdrive) {
   const finalUrl = PROXY_URL + encodeURIComponent(url);
-  const response = await fetch(finalUrl, { mode: 'cors' });
+  const response = await fetch(finalUrl, {
+    mode: 'cors',
+    credentials: 'omit',
+    cache: 'no-store'
+  });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const contentType = response.headers.get('content-type') || '';
   if (!contentType.includes('pdf') && !isGdrive) {
@@ -516,6 +520,14 @@ async function loadFromURL() {
     await openArrayBuffer(ab, shareableRaw);
   } catch (e) {
     hideLoader();
+    const msg = (e && e.message) ? String(e.message) : '';
+    if (msg.includes('HTTP 403')) {
+      showErr(
+        '프록시 403 오류: Worker의 ALLOWED_DOMAIN 설정을 현재 앱 도메인과 일치시켜주세요.\n' +
+        '예) https://easybook.chichiboo.link 또는 로컬 개발 주소를 추가 허용'
+      );
+      return;
+    }
     if (isGdrive && driveId) {
       openDriveEmbedById(driveId, shareableRaw);
       return;
