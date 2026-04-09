@@ -14,7 +14,7 @@
 }
 *{ margin:0; padding:0; box-sizing:border-box; }
 body{ font-family:'Pretendard GOV',sans-serif; background:radial-gradient(circle at 40% -20%, #3d2f22 0%, var(--bg) 45%); color:var(--ui); height:100vh; overflow:hidden; display:flex; flex-direction:column; }
-#tb{ display:flex; align-items:center; gap:8px; padding:8px 14px; background:rgba(35,29,23,.95); border-bottom:1px solid #3a2e22; flex-shrink:0; flex-wrap:wrap; }
+#tb{ display:flex; align-items:center; gap:10px; padding:12px 18px; background:rgba(35,29,23,.95); border-bottom:1px solid #3a2e22; flex-shrink:0; flex-wrap:wrap; }
 #tb h1{ font-size:16px; color:var(--accent); margin-right:4px; white-space:nowrap; letter-spacing:.02em; font-weight:700; }
 .sep{ width:1px; height:20px; background:#3a2e22; flex-shrink:0; }
 
@@ -34,7 +34,7 @@ body{ font-family:'Pretendard GOV',sans-serif; background:radial-gradient(circle
 #zv{ font-size:12px; min-width:36px; text-align:center; }
 #pi{ font-size:12px; color:var(--muted); white-space:nowrap; margin-left:auto; }
 
-#ub{ display:flex; align-items:center; gap:8px; padding:6px 14px; background:#1e1812; border-bottom:1px solid #3a2e22; flex-shrink:0; }
+#ub{ display:flex; align-items:center; gap:10px; padding:10px 18px; background:#1e1812; border-bottom:1px solid #3a2e22; flex-shrink:0; }
 #ub label{ font-size:11px; color:var(--muted); white-space:nowrap; }
 #ui{ flex:1; background:var(--surface); border:1px solid #3a2e22; color:var(--ui); padding:5px 10px; border-radius:4px; font-size:12px; font-family:'Pretendard GOV',sans-serif; outline:none; transition:border-color .2s; }
 #ui:focus{ border-color:var(--accent); }
@@ -86,8 +86,24 @@ body.drag-over #main::after{ content:'PDF 파일을 여기에 놓으세요'; pos
   to{ transform:rotateY(170deg); opacity:.08; }
 }
 
-#embed-wrap{ display:none; width:min(1100px,94vw); height:min(85vh,980px); border:1px solid #3a2e22; border-radius:8px; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,.55); background:#100d0b; }
+#embed-wrap{ display:none; position:relative; width:min(1100px,94vw); height:min(85vh,980px); border:1px solid #3a2e22; border-radius:8px; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,.55); background:#100d0b; }
 #embed-wrap iframe{ width:100%; height:100%; border:none; background:#fff; }
+#embed-hint{ position:absolute; top:10px; right:10px; z-index:5; background:rgba(0,0,0,.45); color:#f6d6a4; font-size:11px; padding:6px 9px; border-radius:6px; pointer-events:none; }
+.embed-flip-sheet{
+  position:absolute; top:0; height:100%; width:50%;
+  background:linear-gradient(to right,#fff5d5,#e8d3a6 55%,#c9a77d);
+  box-shadow:0 10px 24px rgba(0,0,0,.28); pointer-events:none; z-index:6;
+}
+.embed-flip-sheet.next{ left:50%; transform-origin:left center; animation:paper-next .4s linear forwards; }
+.embed-flip-sheet.prev{ left:0; transform-origin:right center; animation:paper-prev .4s linear forwards; }
+.embed-fx-btn{
+  position:absolute; top:50%; transform:translateY(-50%);
+  width:36px; height:36px; border-radius:50%; border:1px solid rgba(200,131,42,.7);
+  background:rgba(16,13,11,.55); color:#f0ca91; z-index:7; cursor:pointer;
+}
+.embed-fx-btn:hover{ background:rgba(32,25,20,.8); }
+#embed-fx-prev{ left:10px; }
+#embed-fx-next{ right:10px; }
 
 #progbar{ position:absolute; bottom:0; left:0; height:2px; background:var(--accent); transition:width .3s; z-index:300; }
 #kbh{ position:absolute; bottom:12px; right:16px; font-size:10px; color:var(--muted); pointer-events:none; }
@@ -110,6 +126,24 @@ body.drag-over #main::after{ content:'PDF 파일을 여기에 놓으세요'; pos
 #help-card ol{ padding-left:18px; color:var(--ui); line-height:1.8; font-size:13px; }
 #help-card li+li{ margin-top:8px; }
 #help-close{ margin-top:14px; }
+
+@media (max-width: 900px){
+  #tb{ padding:12px 12px; gap:8px; }
+  #tb h1{ width:100%; margin-right:0; margin-bottom:2px; font-size:17px; }
+  .sep{ display:none; }
+  .btn, #file-label, #lub, #share-btn, #help-btn{ min-height:36px; padding:7px 10px; font-size:13px; }
+  #ub{ padding:10px 12px; gap:8px; }
+  #ub label{ display:none; }
+  #land{ padding:24px 16px; gap:16px; }
+  #land h2{ font-size:24px; }
+  .nav{ width:50px; height:50px; bottom:14px; top:auto; transform:none; }
+  .nav:hover{ transform:none; }
+  #pb{ left:14px; } #nb{ right:14px; }
+  #kbh{ display:none; }
+  #embed-wrap{ width:96vw; height:78vh; }
+  #embed-hint{ font-size:10px; padding:5px 8px; right:8px; top:8px; }
+  .embed-fx-btn{ width:32px; height:32px; top:auto; bottom:10px; transform:none; }
+}
 </style>
 </head>
 <body>
@@ -160,7 +194,12 @@ body.drag-over #main::after{ content:'PDF 파일을 여기에 놓으세요'; pos
     <div id="progbar" style="width:0%"></div>
   </div>
 
-  <div id="embed-wrap"><iframe id="embed-frame" title="Google Drive embedded preview"></iframe></div>
+  <div id="embed-wrap">
+    <iframe id="embed-frame" title="Google Drive embedded preview"></iframe>
+    <div id="embed-hint">임베드 모드 · 좌/우 탭 시 책장 효과</div>
+    <button id="embed-fx-prev" class="embed-fx-btn" type="button">‹</button>
+    <button id="embed-fx-next" class="embed-fx-btn" type="button">›</button>
+  </div>
 
   <div id="ldr"><div class="sp"></div><p id="lt">로딩 중…</p></div>
   <div id="em"></div>
@@ -208,6 +247,8 @@ const shareBtn = document.getElementById('share-btn');
 const helpModal = document.getElementById('help-modal');
 const embedWrap = document.getElementById('embed-wrap');
 const embedFrame = document.getElementById('embed-frame');
+const embedFxPrev = document.getElementById('embed-fx-prev');
+const embedFxNext = document.getElementById('embed-fx-next');
 
 let pdfDoc = null, total = 0, curSpread = 0, spreads = [];
 let baseScale = 1, zoomF = 1, busy = false;
@@ -224,6 +265,14 @@ function showEmbedViewer(src) {
   embedFrame.src = src;
   embedWrap.style.display = 'block';
   land.style.display = 'none';
+}
+
+function playEmbedFlip(dir) {
+  if (embedWrap.style.display !== 'block') return;
+  const sheet = document.createElement('div');
+  sheet.className = `embed-flip-sheet ${dir === 'r' ? 'next' : 'prev'}`;
+  embedWrap.appendChild(sheet);
+  sheet.addEventListener('animationend', () => sheet.remove(), { once:true });
 }
 
 function buildSpreads(n, mode = 'double') {
@@ -341,9 +390,31 @@ document.addEventListener('keydown', e => {
   if (vwr.style.display === 'flex') {
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(curSpread + 1, 'r');
     else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') go(curSpread - 1, 'l');
+  } else if (embedWrap.style.display === 'block') {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') playEmbedFlip('r');
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') playEmbedFlip('l');
   }
   if (e.key === 'Escape') helpModal.classList.remove('on');
 });
+
+embedWrap.addEventListener('click', (e) => {
+  const rect = embedWrap.getBoundingClientRect();
+  const mid = rect.left + rect.width / 2;
+  playEmbedFlip(e.clientX >= mid ? 'r' : 'l');
+});
+
+let touchStartX = 0;
+embedWrap.addEventListener('touchstart', (e) => {
+  touchStartX = e.changedTouches[0].clientX;
+}, { passive:true });
+embedWrap.addEventListener('touchend', (e) => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) < 24) return;
+  playEmbedFlip(dx < 0 ? 'r' : 'l');
+}, { passive:true });
+
+embedFxPrev.addEventListener('click', () => playEmbedFlip('l'));
+embedFxNext.addEventListener('click', () => playEmbedFlip('r'));
 
 function applyZoom() { zv.textContent = Math.round(zoomF * 100) + '%'; renderSpread(curSpread); }
 document.getElementById('zi').addEventListener('click', () => { zoomF = Math.min(zoomF + .15, 2.5); applyZoom(); });
