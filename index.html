@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📖 eBook Viewer</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600&family=DM+Serif+Display:ital@0;1&family=Noto+Sans+KR:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#1a1410; --surface:#231d17; --paper:#fdf6e3;
+  --accent:#c8832a; --accent2:#8b5e2a; --spine:#6b3a1f;
+  --ui:#c4a882; --muted:#6b5a45;
+}
+*{ margin:0; padding:0; box-sizing:border-box; }
+body{ font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--ui); height:100vh; overflow:hidden; display:flex; flex-direction:column; }
+
+/* ── 툴바 ── */
+#tb{ display:flex; align-items:center; gap:8px; padding:8px 14px; background:var(--surface); border-bottom:1px solid #3a2e22; flex-shrink:0; flex-wrap:wrap; }
+#tb h1{ font-family:'DM Serif Display',serif; font-size:16px; color:var(--accent); margin-right:4px; white-space:nowrap; }
+.sep{ width:1px; height:20px; background:#3a2e22; flex-shrink:0; }
+
+/* 파일 업로드 버튼 — label 방식 (모바일 호환) */
+#file-label{
+  display:inline-flex; align-items:center; gap:6px;
+  background:var(--accent2); color:#fdf6e3;
+  border:none; padding:5px 13px; border-radius:4px;
+  cursor:pointer; font-size:12px; font-family:'Noto Sans KR',sans-serif;
+  transition:background .2s; white-space:nowrap; user-select:none;
+}
+#file-label:hover{ background:var(--accent); }
+#fi{ position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+
+.btn{ background:none; border:1px solid #3a2e22; color:var(--ui); padding:4px 10px; border-radius:4px; cursor:pointer; font-size:12px; font-family:'Noto Sans KR',sans-serif; transition:all .2s; white-space:nowrap; }
+.btn:hover{ border-color:var(--accent); color:var(--accent); }
+.btn:disabled{ opacity:.25; cursor:default; pointer-events:none; }
+#zv{ font-size:12px; min-width:36px; text-align:center; }
+#pi{ font-size:12px; color:var(--muted); white-space:nowrap; margin-left:auto; }
+
+/* ── URL 바 ── */
+#ub{ display:flex; align-items:center; gap:8px; padding:6px 14px; background:#1e1812; border-bottom:1px solid #3a2e22; flex-shrink:0; }
+#ub label{ font-size:11px; color:var(--muted); white-space:nowrap; }
+#ui{ flex:1; background:var(--surface); border:1px solid #3a2e22; color:var(--ui); padding:5px 10px; border-radius:4px; font-size:12px; font-family:'Noto Sans KR',sans-serif; outline:none; transition:border-color .2s; }
+#ui:focus{ border-color:var(--accent); }
+#ui::placeholder{ color:var(--muted); }
+#lub{ background:var(--accent2); border:none; color:#fdf6e3; padding:5px 14px; border-radius:4px; cursor:pointer; font-size:12px; font-family:'Noto Sans KR',sans-serif; transition:background .2s; white-space:nowrap; }
+#lub:hover{ background:var(--accent); }
+
+/* ── 메인 ── */
+#main{ flex:1; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
+
+/* 드래그 오버 */
+body.drag-over #main::after{
+  content:'PDF 파일을 여기에 놓으세요';
+  position:absolute; inset:0; background:rgba(200,131,42,.15);
+  border:3px dashed var(--accent); border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px; color:var(--accent); z-index:500;
+  pointer-events:none;
+}
+
+/* ── 랜딩 ── */
+#land{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; text-align:center; padding:40px; }
+.bi{ font-size:56px; filter:drop-shadow(0 4px 24px rgba(200,131,42,.4)); animation:flt 3s ease-in-out infinite; }
+@keyframes flt{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-8px); } }
+#land h2{ font-family:'DM Serif Display',serif; font-size:25px; color:var(--accent); line-height:1.4; }
+#land p{ font-size:13px; color:var(--muted); line-height:1.9; }
+
+/* 랜딩 업로드 버튼도 label */
+#file-label-big{
+  display:inline-flex; align-items:center; gap:8px;
+  background:var(--accent); color:#1a1410;
+  border:none; padding:13px 34px; border-radius:6px;
+  font-size:15px; font-family:'Noto Sans KR',sans-serif;
+  cursor:pointer; transition:all .25s; letter-spacing:.04em; user-select:none;
+}
+#file-label-big:hover{ background:#d99035; transform:translateY(-2px); box-shadow:0 8px 24px rgba(200,131,42,.3); }
+
+/* ── 뷰어 ── */
+#vwr{ display:none; position:relative; width:100%; height:100%; align-items:center; justify-content:center; }
+#book{ position:relative; display:flex; align-items:stretch; }
+#book.single{ box-shadow:4px 4px 0 #3a2e22, 8px 8px 0 #2a1e14, 0 20px 60px rgba(0,0,0,.7); }
+#book.spread{ box-shadow:-6px 6px 0 #3a2e22, -12px 12px 0 #2a1e14, 0 20px 60px rgba(0,0,0,.7); }
+
+.slot{ position:relative; overflow:hidden; background:var(--paper); }
+.slot canvas{ display:block; }
+/* 종이 질감 */
+.slot::after{ content:''; position:absolute; inset:0; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E"); pointer-events:none; opacity:.6; mix-blend-mode:multiply; }
+.pn{ position:absolute; bottom:10px; font-size:10px; color:rgba(100,80,50,.4); font-family:'DM Serif Display',serif; pointer-events:none; user-select:none; }
+.pn.l{ left:14px; } .pn.r{ right:14px; }
+#spl{ position:absolute; top:0; bottom:0; left:50%; width:3px; background:linear-gradient(to bottom,#c8a882,var(--spine),#c8a882); z-index:10; pointer-events:none; display:none; }
+
+/* 네비 버튼 */
+.nav{ position:absolute; top:50%; transform:translateY(-50%); background:rgba(35,29,23,.85); border:1px solid #3a2e22; color:var(--accent); width:44px; height:44px; border-radius:50%; cursor:pointer; font-size:20px; display:flex; align-items:center; justify-content:center; transition:all .2s; z-index:50; backdrop-filter:blur(4px); }
+.nav:hover{ background:var(--accent2); border-color:var(--accent); transform:translateY(-50%) scale(1.08); }
+.nav:disabled{ opacity:.2; cursor:default; pointer-events:none; }
+#pb{ left:12px; } #nb{ right:12px; }
+
+/* 플립 애니 */
+@keyframes fi-r{ from{ opacity:0; transform:perspective(800px) rotateY(-10deg); } to{ opacity:1; transform:none; } }
+@keyframes fi-l{ from{ opacity:0; transform:perspective(800px) rotateY(10deg); } to{ opacity:1; transform:none; } }
+.fx-r{ animation:fi-r .3s ease; } .fx-l{ animation:fi-l .3s ease; }
+
+/* 진행바 */
+#progbar{ position:absolute; bottom:0; left:0; height:2px; background:var(--accent); transition:width .3s; z-index:300; }
+#kbh{ position:absolute; bottom:12px; right:16px; font-size:10px; color:var(--muted); pointer-events:none; }
+
+/* ── 로더 ── */
+#ldr{ display:none; position:absolute; inset:0; background:rgba(26,20,16,.92); align-items:center; justify-content:center; flex-direction:column; gap:16px; z-index:400; }
+#ldr.on{ display:flex; }
+.sp{ width:38px; height:38px; border:3px solid #3a2e22; border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
+@keyframes spin{ to{ transform:rotate(360deg); } }
+#lt{ font-size:13px; color:var(--muted); text-align:center; line-height:1.6; }
+
+/* ── 에러 토스트 ── */
+#em{ display:none; position:absolute; bottom:20px; left:50%; transform:translateX(-50%); background:#5c2020; color:#f4a0a0; padding:10px 20px; border-radius:6px; font-size:12px; z-index:500; text-align:center; line-height:1.6; max-width:85%; }
+#em.on{ display:block; animation:fdin .3s ease; }
+@keyframes fdin{ from{ opacity:0; transform:translateX(-50%) translateY(8px); } to{ opacity:1; transform:translateX(-50%); } }
+
+/* ── 성공 토스트 ── */
+#sm{ display:none; position:absolute; bottom:20px; left:50%; transform:translateX(-50%); background:#1e4a2a; color:#7ed9a0; padding:10px 20px; border-radius:6px; font-size:12px; z-index:500; }
+#sm.on{ display:block; }
+</style>
+</head>
+<body>
+
+<!-- ─── 숨김 파일 입력 (label로만 트리거) ─── -->
+<input type="file" id="fi" accept="application/pdf" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;">
+
+<!-- ─── 툴바 ─── -->
+<div id="tb">
+  <h1>📖 eBook Viewer</h1>
+  <div class="sep"></div>
+  <!-- ✅ label for="fi" → 모바일에서도 확실히 동작 -->
+  <label id="file-label" for="fi">📂 파일 열기</label>
+  <div class="sep"></div>
+  <button class="btn" id="zo">−</button>
+  <span id="zv">100%</span>
+  <button class="btn" id="zi">+</button>
+  <button class="btn" id="zf">맞춤</button>
+  <div class="sep"></div>
+  <span id="pi">—</span>
+</div>
+
+<!-- ─── URL 바 ─── -->
+<div id="ub">
+  <label for="ui" style="font-size:11px;color:var(--muted);white-space:nowrap;">🔗 URL</label>
+  <input type="text" id="ui" placeholder="Google Drive 공유 링크 또는 직접 PDF URL">
+  <button id="lub">불러오기</button>
+</div>
+
+<!-- ─── 메인 ─── -->
+<div id="main">
+
+  <!-- 랜딩 -->
+  <div id="land">
+    <div class="bi">📚</div>
+    <h2>PDF를 eBook으로<br>아름답게</h2>
+    <p>
+      PDF 파일을 선택하거나 드래그해서 놓으세요.<br>
+      표지·뒷표지는 단면, 본문은 양면 펼침으로 자동 구성됩니다.
+    </p>
+    <!-- ✅ label for="fi" — 버튼처럼 보이지만 실제 label -->
+    <label id="file-label-big" for="fi">📂 PDF 파일 선택</label>
+    <p style="font-size:11px;color:#3a2a1a;margin-top:-10px;">
+      또는 위 URL 입력란에 Google Drive 공유 링크를 붙여넣으세요
+    </p>
+  </div>
+
+  <!-- 뷰어 -->
+  <div id="vwr">
+    <div id="book" class="single">
+      <div class="slot" id="ls"><canvas id="lc"></canvas><span class="pn l" id="ln"></span></div>
+      <div id="spl"></div>
+      <div class="slot" id="rs"><canvas id="rc"></canvas><span class="pn r" id="rn"></span></div>
+    </div>
+    <button class="nav" id="pb">‹</button>
+    <button class="nav" id="nb">›</button>
+    <div id="kbh">← → 키로 이동</div>
+    <div id="progbar" style="width:0%"></div>
+  </div>
+
+  <!-- 로더 -->
+  <div id="ldr"><div class="sp"></div><p id="lt">로딩 중…</p></div>
+
+  <!-- 토스트 -->
+  <div id="em"></div>
+  <div id="sm"></div>
+</div>
+
+<!-- ─── PDF.js ─── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script>
+// ── PDF.js workerSrc: 반드시 같은 버전 ──
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+// ── 요소 참조 ──
+const land    = document.getElementById('land');
+const vwr     = document.getElementById('vwr');
+const book    = document.getElementById('book');
+const ls      = document.getElementById('ls'),   rs  = document.getElementById('rs');
+const lc      = document.getElementById('lc'),   rc  = document.getElementById('rc');
+const spl     = document.getElementById('spl');
+const ln      = document.getElementById('ln'),   rn  = document.getElementById('rn');
+const pb      = document.getElementById('pb'),   nb  = document.getElementById('nb');
+const pi      = document.getElementById('pi');
+const ldr     = document.getElementById('ldr'),  lt  = document.getElementById('lt');
+const zv      = document.getElementById('zv');
+const fi      = document.getElementById('fi');
+const uiEl    = document.getElementById('ui');
+const progbar = document.getElementById('progbar');
+const emEl    = document.getElementById('em');
+const smEl    = document.getElementById('sm');
+
+// ── 상태 ──
+let pdfDoc = null, total = 0, curSpread = 0, spreads = [];
+let baseScale = 1, zoomF = 1, busy = false;
+
+// ════════════════════════════════════
+// 스프레드 계산
+// ════════════════════════════════════
+function buildSpreads(n) {
+  const s = [];
+  if (n < 1) return s;
+  s.push({ type:'cover', pages:[1] });
+  if (n === 1) return s;
+  const body = [];
+  for (let i = 2; i <= n - 1; i++) body.push(i);
+  for (let i = 0; i < body.length; i += 2) {
+    const p = [body[i]];
+    if (i + 1 < body.length) p.push(body[i + 1]);
+    s.push({ type: p.length === 2 ? 'spread' : 'half', pages: p });
+  }
+  s.push({ type:'back', pages:[n] });
+  return s;
+}
+
+// ════════════════════════════════════
+// 렌더
+// ════════════════════════════════════
+async function renderPage(canvas, num) {
+  if (!num || num < 1 || num > total) { canvas.width = 0; canvas.height = 0; return; }
+  const pg = await pdfDoc.getPage(num);
+  const vp = pg.getViewport({ scale: baseScale * zoomF });
+  canvas.width  = vp.width;
+  canvas.height = vp.height;
+  await pg.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+}
+
+async function renderSpread(idx, dir) {
+  if (idx < 0 || idx >= spreads.length) return;
+  const sp = spreads[idx];
+  const single = (sp.type === 'cover' || sp.type === 'back' || sp.pages.length === 1);
+
+  if (single) {
+    book.className = 'single';
+    spl.style.display = 'none';
+    ls.style.display  = 'none';
+    rs.style.display  = 'block';
+    await renderPage(rc, sp.pages[0]);
+    rs.style.width  = rc.width  + 'px';
+    rs.style.height = rc.height + 'px';
+    rn.textContent = sp.type === 'cover' ? '표지' : sp.type === 'back' ? '뒷표지' : sp.pages[0];
+    ln.textContent = '';
+  } else {
+    book.className = 'spread';
+    spl.style.display = 'block';
+    ls.style.display  = 'block';
+    rs.style.display  = 'block';
+    await Promise.all([
+      renderPage(lc, sp.pages[0]),
+      renderPage(rc, sp.pages[1] || null)
+    ]);
+    const h = Math.max(lc.height, rc.height);
+    ls.style.width  = lc.width  + 'px'; ls.style.height = h + 'px';
+    rs.style.width  = rc.width  + 'px'; rs.style.height = h + 'px';
+    spl.style.height = h + 'px';
+    ln.textContent = sp.pages[0];
+    rn.textContent = sp.pages[1] || '';
+  }
+
+  if (dir) {
+    const cls = dir === 'r' ? 'fx-r' : 'fx-l';
+    book.classList.add(cls);
+    book.addEventListener('animationend', () => book.classList.remove(cls), { once:true });
+  }
+
+  pb.disabled = (idx === 0);
+  nb.disabled = (idx === spreads.length - 1);
+  progbar.style.width = ((idx + 1) / spreads.length * 100) + '%';
+
+  const pgs = sp.pages.join('–');
+  const lbl = sp.type === 'cover' ? '표지' : sp.type === 'back' ? '뒷표지' : `${pgs}쪽`;
+  pi.textContent = `${lbl}  (${idx + 1}/${spreads.length})`;
+}
+
+// ════════════════════════════════════
+// 이동
+// ════════════════════════════════════
+async function go(idx, dir) {
+  if (busy || idx < 0 || idx >= spreads.length) return;
+  busy = true; curSpread = idx;
+  await renderSpread(idx, dir);
+  busy = false;
+}
+pb.addEventListener('click', () => go(curSpread - 1, 'l'));
+nb.addEventListener('click', () => go(curSpread + 1, 'r'));
+document.addEventListener('keydown', e => {
+  if      (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(curSpread + 1, 'r');
+  else if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   go(curSpread - 1, 'l');
+});
+
+// ════════════════════════════════════
+// 줌
+// ════════════════════════════════════
+function applyZoom() { zv.textContent = Math.round(zoomF * 100) + '%'; renderSpread(curSpread); }
+document.getElementById('zi').addEventListener('click', () => { zoomF = Math.min(zoomF + .15, 2.5); applyZoom(); });
+document.getElementById('zo').addEventListener('click', () => { zoomF = Math.max(zoomF - .15, .4);  applyZoom(); });
+document.getElementById('zf').addEventListener('click', () => { zoomF = 1; applyZoom(); });
+
+// ════════════════════════════════════
+// PDF 초기화 (ArrayBuffer → PDF.js)
+// ════════════════════════════════════
+async function openArrayBuffer(ab) {
+  showLoader('PDF 렌더링 중…');
+  try {
+    const doc = await pdfjsLib.getDocument({ data: ab }).promise;
+    pdfDoc = doc;
+    total  = doc.numPages;
+    spreads = buildSpreads(total);
+    curSpread = 0; zoomF = 1;
+
+    // 기준 스케일 계산
+    const pg0 = await pdfDoc.getPage(1);
+    const vp0 = pg0.getViewport({ scale: 1 });
+    const mainEl = document.getElementById('main');
+    const mh = mainEl.clientHeight * 0.88;
+    const mw = (mainEl.clientWidth - 160) * 0.46;
+    baseScale = Math.min(mh / vp0.height, mw / vp0.width, 1.8);
+    zv.textContent = '100%';
+
+    await renderSpread(0);
+    land.style.display = 'none';
+    vwr.style.display  = 'flex';
+    hideLoader();
+    showSuccess(`총 ${total}페이지 · ${spreads.length}개 스프레드`);
+  } catch (e) {
+    hideLoader();
+    showErr('PDF 열기 실패: ' + (e.message || String(e)));
+    console.error(e);
+  }
+}
+
+// ════════════════════════════════════
+// 파일 입력 처리 (label for="fi" 방식)
+// ════════════════════════════════════
+fi.addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  if (file.type !== 'application/pdf') { showErr('PDF 파일만 지원합니다.'); return; }
+  const reader = new FileReader();
+  reader.onload  = e => openArrayBuffer(e.target.result);
+  reader.onerror = () => showErr('파일 읽기 실패');
+  showLoader('파일 읽는 중…');
+  reader.readAsArrayBuffer(file);
+  // 같은 파일 재선택 가능하게 초기화
+  this.value = '';
+});
+
+// ════════════════════════════════════
+// 드래그 앤 드롭
+// ════════════════════════════════════
+document.body.addEventListener('dragenter', e => { e.preventDefault(); document.body.classList.add('drag-over'); });
+document.body.addEventListener('dragover',  e => { e.preventDefault(); });
+document.body.addEventListener('dragleave', e => { if (!e.relatedTarget) document.body.classList.remove('drag-over'); });
+document.body.addEventListener('drop', e => {
+  e.preventDefault();
+  document.body.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  if (file.type !== 'application/pdf') { showErr('PDF 파일만 지원합니다.'); return; }
+  const reader = new FileReader();
+  reader.onload = ev => openArrayBuffer(ev.target.result);
+  reader.onerror = () => showErr('파일 읽기 실패');
+  showLoader('파일 읽는 중…');
+  reader.readAsArrayBuffer(file);
+});
+
+// ════════════════════════════════════
+// URL 로드 (Google Drive 포함)
+// 로컬 fetch CORS 우회 불가능 → 안내 메시지 포함
+// ════════════════════════════════════
+function toDirectURL(raw) {
+  const url = raw.trim();
+  // Google Drive /file/d/ID/view → uc?export=download
+  const m = url.match(/drive\.google\.com\/file\/d\/([^/?#\s]+)/);
+  if (m) return { url: `https://drive.google.com/uc?export=download&id=${m[1]}`, isGdrive: true };
+  if (url.includes('drive.google.com/uc')) return { url, isGdrive: true };
+  return { url, isGdrive: false };
+}
+
+async function loadFromURL() {
+  const raw = uiEl.value.trim();
+  if (!raw) return;
+  const { url, isGdrive } = toDirectURL(raw);
+
+  showLoader(isGdrive
+    ? 'Google Drive에서 다운로드 중…\n(공유 설정: 링크가 있는 모든 사용자)'
+    : 'PDF 다운로드 중…');
+
+  try {
+    const res = await fetch(url, { mode: 'cors' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const ab = await res.arrayBuffer();
+    await openArrayBuffer(ab);
+  } catch (e) {
+    hideLoader();
+    if (isGdrive) {
+      showErr(
+        'Google Drive CORS 오류\n' +
+        '① Drive 파일 공유: "링크가 있는 모든 사용자"\n' +
+        '② 또는 파일을 직접 업로드해주세요 (📂 파일 열기)'
+      );
+    } else {
+      showErr('URL 로드 실패: ' + (e.message || '서버가 CORS를 허용하지 않습니다.'));
+    }
+    console.error(e);
+  }
+}
+
+document.getElementById('lub').addEventListener('click', loadFromURL);
+uiEl.addEventListener('keydown', e => { if (e.key === 'Enter') loadFromURL(); });
+
+// ?pdf= 파라미터 자동 로드
+const qp = new URLSearchParams(location.search).get('pdf');
+if (qp) { uiEl.value = qp; loadFromURL(); }
+
+// ════════════════════════════════════
+// UI 헬퍼
+// ════════════════════════════════════
+function showLoader(msg) { lt.textContent = msg || '로딩 중…'; ldr.classList.add('on'); }
+function hideLoader()    { ldr.classList.remove('on'); }
+
+let etimer;
+function showErr(msg) {
+  emEl.textContent = msg; emEl.className = 'on';
+  clearTimeout(etimer);
+  etimer = setTimeout(() => emEl.className = '', 8000);
+}
+
+let stimer;
+function showSuccess(msg) {
+  smEl.textContent = msg; smEl.className = 'on';
+  clearTimeout(stimer);
+  stimer = setTimeout(() => smEl.className = '', 3000);
+}
+</script>
+</body>
+</html>
