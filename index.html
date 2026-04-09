@@ -42,7 +42,7 @@ body{ font-family:'Pretendard GOV',sans-serif; background:radial-gradient(circle
 #lub,#share-btn,#help-btn{ background:var(--accent2); border:none; color:#fdf6e3; padding:5px 12px; border-radius:4px; cursor:pointer; font-size:12px; font-family:'Pretendard GOV',sans-serif; transition:background .2s; white-space:nowrap; }
 #lub:hover,#share-btn:hover,#help-btn:hover{ background:var(--accent); }
 
-#main{ flex:1; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
+#main{ flex:1; min-height:0; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
 body.drag-over #main::after{ content:'PDF 파일을 여기에 놓으세요'; position:absolute; inset:0; background:rgba(200,131,42,.15); border:3px dashed var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:20px; color:var(--accent); z-index:500; pointer-events:none; }
 
 #land{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; text-align:center; padding:40px; }
@@ -53,7 +53,8 @@ body.drag-over #main::after{ content:'PDF 파일을 여기에 놓으세요'; pos
 #file-label-big{ display:inline-flex; align-items:center; gap:8px; background:var(--accent); color:#1a1410; border:none; padding:13px 34px; border-radius:6px; font-size:15px; cursor:pointer; transition:all .25s; letter-spacing:.04em; user-select:none; }
 #file-label-big:hover{ background:#d99035; transform:translateY(-2px); box-shadow:0 8px 24px rgba(200,131,42,.3); }
 
-#vwr{ display:none; position:relative; width:100%; height:100%; align-items:center; justify-content:center; perspective:2200px; }
+#vwr{ display:none; position:relative; width:100%; height:100%; align-items:flex-start; justify-content:flex-start; perspective:2200px; overflow:auto; padding:22px 66px 40px; cursor:grab; }
+#vwr.dragging{ cursor:grabbing; user-select:none; }
 #book{ position:relative; display:flex; align-items:stretch; transform-style:preserve-3d; }
 #book.single{ box-shadow:4px 4px 0 #3a2e22, 8px 8px 0 #2a1e14, 0 20px 60px rgba(0,0,0,.7); }
 #book.spread{ box-shadow:-6px 6px 0 #3a2e22, -12px 12px 0 #2a1e14, 0 20px 60px rgba(0,0,0,.7); }
@@ -63,14 +64,14 @@ body.drag-over #main::after{ content:'PDF 파일을 여기에 놓으세요'; pos
 .slot::after{ content:''; position:absolute; inset:0; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E"); pointer-events:none; opacity:.6; mix-blend-mode:multiply; }
 .pn{ position:absolute; bottom:10px; font-size:10px; color:rgba(100,80,50,.4); pointer-events:none; user-select:none; }
 .pn.l{ left:14px; } .pn.r{ right:14px; }
-#spl{ position:absolute; top:0; bottom:0; left:50%; width:3px; background:linear-gradient(to bottom,#c8a882,var(--spine),#c8a882); z-index:10; pointer-events:none; display:none; }
+#spl{ display:none !important; width:0 !important; }
 .nav{ position:absolute; top:50%; transform:translateY(-50%); background:rgba(35,29,23,.85); border:1px solid #3a2e22; color:var(--accent); width:44px; height:44px; border-radius:50%; cursor:pointer; font-size:20px; display:flex; align-items:center; justify-content:center; transition:all .2s; z-index:50; backdrop-filter:blur(4px); }
 .nav:hover{ background:var(--accent2); border-color:var(--accent); transform:translateY(-50%) scale(1.08); }
 .nav:disabled{ opacity:.2; cursor:default; pointer-events:none; }
 #pb{ left:12px; } #nb{ right:12px; }
 
 .flip-sheet{
-  position:absolute; top:0; height:100%; background:linear-gradient(to right,#fff8dd,#f1dfb8 48%,#dfc495 100%);
+  position:absolute; top:0; height:100%; background:linear-gradient(to right,#ffffff,#f8f8f8 52%,#eeeeee 100%);
   box-shadow:0 8px 24px rgba(0,0,0,.28); z-index:30; pointer-events:none;
   backface-visibility:hidden; transform-style:preserve-3d;
 }
@@ -111,6 +112,9 @@ body.drag-over #main::after{ content:'PDF 파일을 여기에 놓으세요'; pos
 #help-card ol{ padding-left:18px; color:var(--ui); line-height:1.8; font-size:13px; }
 #help-card li+li{ margin-top:8px; }
 #help-close{ margin-top:14px; }
+#ft{ flex-shrink:0; border-top:1px solid #3a2e22; background:#1c1611; text-align:center; padding:9px 12px; font-size:12px; color:var(--muted); }
+#ft a{ color:#e6c089; text-decoration:none; border-bottom:1px dotted #8b5e2a; }
+#ft a:hover{ color:#f2d2a2; border-bottom-color:#d4a36b; }
 
 @media (max-width: 900px){
   #tb{ padding:12px 12px; gap:8px; }
@@ -127,6 +131,8 @@ body.drag-over #main::after{ content:'PDF 파일을 여기에 놓으세요'; pos
   #kbh{ display:none; }
   #embed-wrap{ width:96vw; height:78vh; }
   #embed-hint{ font-size:10px; padding:5px 8px; right:8px; top:8px; }
+  #vwr{ padding:14px 8px 56px; }
+  #ft{ font-size:11px; padding:8px 10px; }
 }
 </style>
 </head>
@@ -203,6 +209,10 @@ body.drag-over #main::after{ content:'PDF 파일을 여기에 놓으세요'; pos
   </div>
 </div>
 
+<footer id="ft">
+  <a href="https://litt.ly/chichiboo" target="_blank" rel="noopener noreferrer">Created by. 교육뮤지컬 꿈꾸는 치수쌤</a>
+</footer>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
@@ -235,10 +245,32 @@ let pdfDoc = null, total = 0, curSpread = 0, spreads = [];
 let baseScale = 1, zoomF = 1, busy = false;
 let viewMode = 'double';
 let loadedSourceURL = '';
+let isPanning = false, panStartX = 0, panStartY = 0, panScrollL = 0, panScrollT = 0;
 
 function showPDFViewer() {
   embedWrap.style.display = 'none';
   vwr.style.display = 'flex';
+}
+
+function recalcBaseScale() {
+  if (!pdfDoc) return;
+  pdfDoc.getPage(1).then(pg0 => {
+    const vp0 = pg0.getViewport({ scale: 1 });
+    const mainEl = document.getElementById('main');
+    const mh = mainEl.clientHeight * 0.9;
+    const narrow = mainEl.clientWidth < 760;
+    const mw = (mainEl.clientWidth - (narrow ? 32 : 140)) * (viewMode === 'double' && !narrow ? 0.48 : 0.92);
+    baseScale = Math.min(mh / vp0.height, mw / vp0.width, 1.9);
+    renderSpread(curSpread);
+  }).catch(() => {});
+}
+
+function centerViewer() {
+  requestAnimationFrame(() => {
+    if (vwr.style.display !== 'flex') return;
+    vwr.scrollLeft = Math.max(0, (vwr.scrollWidth - vwr.clientWidth) / 2);
+    if (zoomF <= 1) vwr.scrollTop = 0;
+  });
 }
 
 function showEmbedViewer(src) {
@@ -317,7 +349,6 @@ async function renderSpread(idx) {
 
   if (single) {
     book.className = 'single';
-    spl.style.display = 'none';
     ls.style.display = 'none';
     rs.style.display = 'block';
     await renderPage(rc, sp.pages[0]);
@@ -327,14 +358,12 @@ async function renderSpread(idx) {
     ln.textContent = '';
   } else {
     book.className = 'spread';
-    spl.style.display = 'block';
     ls.style.display = 'block';
     rs.style.display = 'block';
     await Promise.all([renderPage(lc, sp.pages[0]), renderPage(rc, sp.pages[1] || null)]);
     const h = Math.max(lc.height, rc.height);
     ls.style.width = lc.width + 'px'; ls.style.height = h + 'px';
     rs.style.width = rc.width + 'px'; rs.style.height = h + 'px';
-    spl.style.height = h + 'px';
     ln.textContent = sp.pages[0];
     rn.textContent = sp.pages[1] || '';
   }
@@ -346,6 +375,7 @@ async function renderSpread(idx) {
   const pgs = sp.pages.join('–');
   const lbl = sp.type === 'cover' ? '표지' : sp.type === 'back' ? '뒷표지' : `${pgs}쪽`;
   pi.textContent = `${lbl}  (${idx + 1}/${spreads.length})`;
+  centerViewer();
 }
 
 async function go(idx, dir) {
@@ -388,6 +418,7 @@ function setViewMode(mode) {
   const pageAnchor = spreads[curSpread]?.pages[0] || 1;
   spreads = buildSpreads(total, viewMode);
   curSpread = spreadOfPage(pageAnchor);
+  recalcBaseScale();
   renderSpread(curSpread);
 }
 singleBtn.addEventListener('click', () => setViewMode('single'));
@@ -404,12 +435,7 @@ async function openArrayBuffer(ab, sourceURL = '') {
     zoomF = 1;
     loadedSourceURL = sourceURL;
 
-    const pg0 = await pdfDoc.getPage(1);
-    const vp0 = pg0.getViewport({ scale: 1 });
-    const mainEl = document.getElementById('main');
-    const mh = mainEl.clientHeight * 0.88;
-    const mw = (mainEl.clientWidth - 160) * (viewMode === 'double' ? 0.46 : 0.68);
-    baseScale = Math.min(mh / vp0.height, mw / vp0.width, 1.8);
+    recalcBaseScale();
     zv.textContent = '100%';
 
     await renderSpread(0);
@@ -589,6 +615,31 @@ if (initialPDF) {
 document.getElementById('help-btn').addEventListener('click', () => helpModal.classList.add('on'));
 document.getElementById('help-close').addEventListener('click', () => helpModal.classList.remove('on'));
 helpModal.addEventListener('click', (e) => { if (e.target === helpModal) helpModal.classList.remove('on'); });
+window.addEventListener('resize', () => {
+  if (pdfDoc && vwr.style.display === 'flex') recalcBaseScale();
+});
+
+vwr.addEventListener('pointerdown', (e) => {
+  if (zoomF <= 1 || vwr.style.display !== 'flex') return;
+  isPanning = true;
+  vwr.classList.add('dragging');
+  panStartX = e.clientX;
+  panStartY = e.clientY;
+  panScrollL = vwr.scrollLeft;
+  panScrollT = vwr.scrollTop;
+  vwr.setPointerCapture(e.pointerId);
+});
+vwr.addEventListener('pointermove', (e) => {
+  if (!isPanning) return;
+  vwr.scrollLeft = panScrollL - (e.clientX - panStartX);
+  vwr.scrollTop = panScrollT - (e.clientY - panStartY);
+});
+function stopPan() {
+  isPanning = false;
+  vwr.classList.remove('dragging');
+}
+vwr.addEventListener('pointerup', stopPan);
+vwr.addEventListener('pointercancel', stopPan);
 
 function showLoader(msg) { lt.textContent = msg || '로딩 중…'; ldr.classList.add('on'); }
 function hideLoader() { ldr.classList.remove('on'); }
