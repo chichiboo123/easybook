@@ -25,6 +25,12 @@ body{ font-family:'Pretendard GOV',sans-serif; background:var(--bg); color:var(-
 .tb-group{ display:flex; align-items:center; gap:6px; }
 .tb-spacer{ flex:1; }
 .mat{ font-family:'Material Symbols Rounded'; font-weight:500; font-style:normal; font-size:18px; line-height:1; display:inline-flex; align-items:center; justify-content:center; }
+.page-jump{ display:inline-flex; align-items:center; gap:4px; margin-left:4px; }
+.page-jump input{
+  width:66px; height:30px; padding:0 8px; border-radius:6px; border:1px solid #3a2e22;
+  background:var(--surface); color:var(--ui); font-size:12px; outline:none;
+}
+.page-jump input:focus{ border-color:var(--accent); }
 .icon-btn, #file-label{
   display:inline-flex; align-items:center; justify-content:center;
   width:34px; height:32px; border-radius:6px; border:1px solid #3a2e22;
@@ -68,7 +74,15 @@ body.drag-over #main::after{ content:'PDF 파일을 여기에 놓으세요'; pos
 #book.single{ box-shadow:4px 4px 0 #3a2e22, 8px 8px 0 #2a1e14, 0 20px 60px rgba(0,0,0,.7); }
 #book.spread{ box-shadow:-6px 6px 0 #3a2e22, -12px 12px 0 #2a1e14, 0 20px 60px rgba(0,0,0,.7); }
 .slot{ position:relative; overflow:hidden; background:var(--paper); }
+.pg-layer{ position:relative; }
 .slot canvas{ display:block; }
+.text-layer{
+  position:absolute; inset:0; overflow:hidden; line-height:1; user-select:text;
+  -webkit-user-select:text; cursor:text; color:transparent;
+}
+.text-layer span, .text-layer br{
+  position:absolute; white-space:pre; transform-origin:0% 0%; color:transparent;
+}
 .slot::before{ content:''; position:absolute; inset:0; pointer-events:none; background:linear-gradient(to right, rgba(0,0,0,.10), transparent 14%, transparent 86%, rgba(0,0,0,.08)); mix-blend-mode:multiply; opacity:.35; }
 .slot::after{ content:''; position:absolute; inset:0; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E"); pointer-events:none; opacity:.6; mix-blend-mode:multiply; }
 .pn{ position:absolute; bottom:10px; font-size:10px; color:rgba(100,80,50,.4); pointer-events:none; user-select:none; }
@@ -131,6 +145,7 @@ body.drag-over #main::after{ content:'PDF 파일을 여기에 놓으세요'; pos
   #tb h1{ width:100%; margin-right:0; margin-bottom:2px; font-size:17px; }
   .sep{ display:none; }
   .btn, #file-label, #lub, .icon-btn{ min-height:36px; padding:7px 10px; font-size:13px; }
+  .page-jump input{ width:58px; height:34px; }
   #ub{ padding:10px 12px; gap:8px; }
   #ub label{ display:none; }
   #land{ padding:24px 16px; gap:16px; }
@@ -153,12 +168,18 @@ body.drag-over #main::after{ content:'PDF 파일을 여기에 놓으세요'; pos
   <h1>Easy book</h1>
 
   <div class="tb-group">
+    <button class="icon-btn" id="first-btn" title="첫 페이지" aria-label="첫 페이지"><span class="mat">first_page</span></button>
     <button class="btn mode-btn" id="view-single" title="한쪽보기" aria-label="한쪽보기">한쪽보기</button>
     <button class="btn mode-btn on" id="view-double" title="두쪽보기" aria-label="두쪽보기">두쪽보기</button>
     <button class="icon-btn" id="zo" title="축소" aria-label="축소"><span class="mat">zoom_out</span></button>
     <span id="zv">100%</span>
     <button class="icon-btn" id="zi" title="확대" aria-label="확대"><span class="mat">zoom_in</span></button>
     <button class="icon-btn" id="zf" title="화면 맞춤" aria-label="화면 맞춤"><span class="mat">fit_screen</span></button>
+    <button class="icon-btn" id="last-btn" title="끝 페이지" aria-label="끝 페이지"><span class="mat">last_page</span></button>
+    <div class="page-jump">
+      <input type="number" id="page-input" min="1" step="1" placeholder="페이지">
+      <button class="icon-btn" id="page-go" title="페이지 이동" aria-label="페이지 이동"><span class="mat">subdirectory_arrow_right</span></button>
+    </div>
   </div>
 
   <span id="pi"></span>
@@ -191,9 +212,9 @@ body.drag-over #main::after{ content:'PDF 파일을 여기에 놓으세요'; pos
 
   <div id="vwr">
     <div id="book" class="single">
-      <div class="slot" id="ls"><canvas id="lc"></canvas><span class="pn l" id="ln"></span></div>
+      <div class="slot" id="ls"><div class="pg-layer"><canvas id="lc"></canvas><div class="text-layer" id="ltl"></div></div><span class="pn l" id="ln"></span></div>
       <div id="spl"></div>
-      <div class="slot" id="rs"><canvas id="rc"></canvas><span class="pn r" id="rn"></span></div>
+      <div class="slot" id="rs"><div class="pg-layer"><canvas id="rc"></canvas><div class="text-layer" id="rtl"></div></div><span class="pn r" id="rn"></span></div>
     </div>
     <button class="nav" id="pb">‹</button>
     <button class="nav" id="nb">›</button>
@@ -240,6 +261,7 @@ const vwr = document.getElementById('vwr');
 const book = document.getElementById('book');
 const ls = document.getElementById('ls'), rs = document.getElementById('rs');
 const lc = document.getElementById('lc'), rc = document.getElementById('rc');
+const ltl = document.getElementById('ltl'), rtl = document.getElementById('rtl');
 const spl = document.getElementById('spl');
 const ln = document.getElementById('ln'), rn = document.getElementById('rn');
 const pb = document.getElementById('pb'), nb = document.getElementById('nb');
@@ -253,6 +275,10 @@ const emEl = document.getElementById('em');
 const smEl = document.getElementById('sm');
 const singleBtn = document.getElementById('view-single');
 const doubleBtn = document.getElementById('view-double');
+const firstBtn = document.getElementById('first-btn');
+const lastBtn = document.getElementById('last-btn');
+const pageInput = document.getElementById('page-input');
+const pageGoBtn = document.getElementById('page-go');
 const shareBtn = document.getElementById('share-btn');
 const resetBtn = document.getElementById('reset-btn');
 const themeBtn = document.getElementById('theme-btn');
@@ -324,13 +350,33 @@ function buildSpreads(n, mode = 'double') {
   return s;
 }
 
-async function renderPage(canvas, num) {
-  if (!num || num < 1 || num > total) { canvas.width = 0; canvas.height = 0; return; }
+async function renderPage(canvas, textLayer, num) {
+  if (!num || num < 1 || num > total) {
+    canvas.width = 0; canvas.height = 0;
+    textLayer.innerHTML = '';
+    textLayer.style.width = '0px';
+    textLayer.style.height = '0px';
+    return;
+  }
   const pg = await pdfDoc.getPage(num);
   const vp = pg.getViewport({ scale: baseScale * zoomF });
   canvas.width = vp.width;
   canvas.height = vp.height;
   await pg.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+  try {
+    const textContent = await pg.getTextContent();
+    textLayer.innerHTML = '';
+    textLayer.style.width = `${vp.width}px`;
+    textLayer.style.height = `${vp.height}px`;
+    await pdfjsLib.renderTextLayer({
+      textContent,
+      container: textLayer,
+      viewport: vp,
+      textDivs: []
+    }).promise;
+  } catch {
+    textLayer.innerHTML = '';
+  }
 }
 
 function playFlip(dir) {
@@ -370,7 +416,8 @@ async function renderSpread(idx) {
     book.className = 'single';
     ls.style.display = 'none';
     rs.style.display = 'block';
-    await renderPage(rc, sp.pages[0]);
+    ltl.innerHTML = '';
+    await renderPage(rc, rtl, sp.pages[0]);
     rs.style.width = rc.width + 'px';
     rs.style.height = rc.height + 'px';
     rn.textContent = sp.type === 'cover' ? '표지' : sp.type === 'back' ? '뒷표지' : sp.pages[0];
@@ -379,7 +426,7 @@ async function renderSpread(idx) {
     book.className = 'spread';
     ls.style.display = 'block';
     rs.style.display = 'block';
-    await Promise.all([renderPage(lc, sp.pages[0]), renderPage(rc, sp.pages[1] || null)]);
+    await Promise.all([renderPage(lc, ltl, sp.pages[0]), renderPage(rc, rtl, sp.pages[1] || null)]);
     const h = Math.max(lc.height, rc.height);
     ls.style.width = lc.width + 'px'; ls.style.height = h + 'px';
     rs.style.width = rc.width + 'px'; rs.style.height = h + 'px';
@@ -407,6 +454,8 @@ async function go(idx, dir) {
 
 pb.addEventListener('click', () => go(curSpread - 1, 'l'));
 nb.addEventListener('click', () => go(curSpread + 1, 'r'));
+firstBtn.addEventListener('click', () => go(0));
+lastBtn.addEventListener('click', () => go(spreads.length - 1));
 document.addEventListener('keydown', e => {
   if (vwr.style.display === 'flex') {
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(curSpread + 1, 'r');
@@ -424,6 +473,23 @@ function spreadOfPage(pageNumber) {
   const idx = spreads.findIndex(s => s.pages.includes(pageNumber));
   return idx >= 0 ? idx : 0;
 }
+
+function jumpToPage() {
+  if (!pdfDoc) {
+    showErr('먼저 PDF를 불러와주세요.');
+    return;
+  }
+  const page = Number(pageInput.value);
+  if (!Number.isInteger(page) || page < 1 || page > total) {
+    showErr(`1부터 ${total} 사이 페이지를 입력해주세요.`);
+    return;
+  }
+  go(spreadOfPage(page));
+}
+pageGoBtn.addEventListener('click', jumpToPage);
+pageInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') jumpToPage();
+});
 
 async function setViewMode(mode) {
   if (mode !== 'single' && mode !== 'double') return;
@@ -462,6 +528,7 @@ async function openArrayBuffer(ab, sourceURL = '') {
     const doc = await pdfjsLib.getDocument({ data: ab }).promise;
     pdfDoc = doc;
     total = doc.numPages;
+    pageInput.max = String(total);
     spreads = buildSpreads(total, viewMode);
     curSpread = 0;
     zoomF = 1;
@@ -639,6 +706,8 @@ function resetViewer() {
   loadedSourceURL = '';
   pi.textContent = '';
   zv.textContent = '100%';
+  pageInput.value = '';
+  pageInput.max = '';
   progbar.style.width = '0%';
   vwr.style.display = 'none';
   embedWrap.style.display = 'none';
@@ -677,6 +746,7 @@ window.addEventListener('resize', () => {
 
 vwr.addEventListener('pointerdown', (e) => {
   if (zoomF <= 1 || vwr.style.display !== 'flex') return;
+  if (e.target.closest('.text-layer')) return;
   isPanning = true;
   vwr.classList.add('dragging');
   panStartX = e.clientX;
