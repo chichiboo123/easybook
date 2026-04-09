@@ -100,7 +100,7 @@ body.drag-over #main::after{ content:'PDF 파일을 여기에 놓으세요'; pos
 #embed-wrap iframe{ width:100%; height:100%; border:none; background:#fff; }
 #embed-hint{ position:absolute; top:10px; right:10px; z-index:5; background:rgba(0,0,0,.45); color:#f6d6a4; font-size:11px; padding:6px 9px; border-radius:6px; pointer-events:none; }
 
-#progbar{ display:none; position:fixed; bottom:0; left:0; height:3px; background:linear-gradient(90deg, var(--accent2), var(--accent)); transition:width .4s ease; z-index:100; pointer-events:none; border-radius:0 2px 0 0; }
+#progbar{ display:none !important; position:fixed; bottom:0; left:0; height:3px; background:linear-gradient(90deg, var(--accent2), var(--accent)); transition:width .4s ease; z-index:100; pointer-events:none; border-radius:0 2px 0 0; }
 #kbh{ position:absolute; bottom:12px; right:16px; font-size:10px; color:var(--muted); pointer-events:none; }
 #ldr{ display:none; position:absolute; inset:0; background:rgba(26,20,16,.92); align-items:center; justify-content:center; flex-direction:column; gap:16px; z-index:400; }
 #ldr.on{ display:flex; }
@@ -116,9 +116,10 @@ body.drag-over #main::after{ content:'PDF 파일을 여기에 놓으세요'; pos
 
 #help-modal{ position:absolute; inset:0; background:rgba(12,10,8,.75); z-index:600; display:none; align-items:center; justify-content:center; padding:20px; }
 #help-modal.on{ display:flex; }
-#help-card{ width:min(680px,96vw); max-height:85vh; overflow:auto; border:1px solid #3a2e22; background:#1f1913; border-radius:10px; padding:20px 18px; box-shadow:0 20px 50px rgba(0,0,0,.45); }
-#help-card h3{ color:var(--accent); margin-bottom:12px; font-size:18px; }
-#help-card ol{ padding-left:18px; color:var(--ui); line-height:1.8; font-size:13px; }
+#help-card{ width:min(680px,96vw); max-height:85vh; overflow:auto; border:1px solid #5c442b; background:#221911; border-radius:10px; padding:20px 18px; box-shadow:0 20px 50px rgba(0,0,0,.45); }
+#help-card h3{ color:#f0b35d; margin-bottom:12px; font-size:18px; }
+#help-card ol{ padding-left:18px; color:#f2dfc3; line-height:1.9; font-size:14px; }
+#help-card b{ color:#ffd39a; }
 #help-card li+li{ margin-top:8px; }
 #help-close{ margin-top:14px; }
 #ft{ flex-shrink:0; border-top:1px solid #3a2e22; background:#1c1611; text-align:center; padding:9px 12px; font-size:12px; color:var(--muted); }
@@ -293,7 +294,6 @@ function centerViewer() {
 
 function showEmbedViewer(src) {
   vwr.style.display = 'none';
-  progbar.style.display = 'none';
   embedFrame.src = src;
   embedWrap.style.display = 'block';
   land.style.display = 'none';
@@ -389,7 +389,6 @@ async function renderSpread(idx) {
 
   pb.disabled = (idx === 0);
   nb.disabled = (idx === spreads.length - 1);
-  progbar.style.width = ((idx + 1) / spreads.length * 100) + '%';
 
   const pgs = sp.pages.join('–');
   const lbl = sp.type === 'cover' ? '표지' : sp.type === 'back' ? '뒷표지' : `${pgs}쪽`;
@@ -474,7 +473,6 @@ async function openArrayBuffer(ab, sourceURL = '') {
     await renderSpread(0);
     land.style.display = 'none';
     showPDFViewer();
-    progbar.style.display = 'block';
     hideLoader();
     showSuccess(`총 ${total}페이지 · ${spreads.length}개 화면`);
   } catch (e) {
@@ -641,7 +639,6 @@ function resetViewer() {
   loadedSourceURL = '';
   pi.textContent = '';
   zv.textContent = '100%';
-  progbar.style.display = 'none';
   progbar.style.width = '0%';
   vwr.style.display = 'none';
   embedWrap.style.display = 'none';
