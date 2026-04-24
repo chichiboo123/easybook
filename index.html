@@ -50,6 +50,25 @@ body{
   letter-spacing:.02em; font-weight:700;
 }
 .tb-group{ display:flex; align-items:center; gap:4px; }
+.menu-wrap{ position:relative; display:inline-flex; }
+.menu-panel{
+  position:absolute; top:calc(100% + 8px); right:0;
+  min-width:156px; padding:6px;
+  border:1px solid var(--border); border-radius:10px;
+  background:var(--surface);
+  box-shadow:0 8px 24px var(--shadow);
+  z-index:120; display:none;
+}
+.menu-panel.on{ display:block; }
+.menu-action{
+  width:100%; border:none; background:transparent;
+  color:var(--ui); font-size:13px;
+  text-align:left; padding:8px 10px;
+  border-radius:8px; cursor:pointer;
+  font-family:'Pretendard GOV',sans-serif;
+}
+.menu-action:hover{ background:rgba(96,165,250,.12); color:var(--accent); }
+body.light .menu-action:hover{ background:rgba(29,78,216,.08); }
 .tb-spacer{ flex:1; }
 .mat{
   font-family:'Material Symbols Rounded'; font-weight:500;
@@ -392,6 +411,7 @@ body.slideshow #main{ padding:0; }
   #pi{ flex-shrink:0; }
   .sep{ display:none; }
   .btn, #file-label, #lub, .icon-btn{ min-height:36px; padding:7px 10px; font-size:13px; }
+  .menu-panel{ right:auto; left:0; }
   .page-jump input{ width:72px; height:34px; }
   #ub{ padding:8px 12px; gap:8px; }
   #ub label{ display:none; }
@@ -421,6 +441,7 @@ body.slideshow #main{ padding:0; }
 </head>
 <body>
 <input type="file" id="fi" accept="application/pdf" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;">
+<input type="file" id="ebook-fi" accept=".ebook,application/json" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;">
 
 <div id="tb">
   <h1>Easy book</h1>
@@ -448,6 +469,13 @@ body.slideshow #main{ padding:0; }
 
   <div class="tb-group">
     <label id="file-label" for="fi" title="파일 열기" aria-label="파일 열기"><span class="mat">folder_open</span></label>
+    <div class="menu-wrap">
+      <button class="icon-btn" id="project-btn" title="프로젝트 저장/불러오기" aria-label="프로젝트 저장/불러오기" aria-expanded="false" aria-controls="project-menu"><span class="mat">save_as</span></button>
+      <div class="menu-panel" id="project-menu" role="menu" aria-label="프로젝트 작업 선택">
+        <button class="menu-action" id="project-save-action" role="menuitem">프로젝트 저장</button>
+        <button class="menu-action" id="project-load-action" role="menuitem">프로젝트 불러오기</button>
+      </div>
+    </div>
     <button class="icon-btn" id="reset-btn" title="초기화" aria-label="초기화"><span class="mat">restart_alt</span></button>
     <button class="icon-btn" id="share-btn" title="공유 링크 생성" aria-label="공유 링크 생성"><span class="mat">share</span></button>
     <button class="icon-btn" id="theme-btn" title="다크/라이트 모드" aria-label="다크/라이트 모드"><span class="mat" id="theme-icon">dark_mode</span></button>
@@ -536,6 +564,7 @@ const pi = document.getElementById('pi');
 const ldr = document.getElementById('ldr'), lt = document.getElementById('lt');
 const zv = document.getElementById('zv');
 const fi = document.getElementById('fi');
+const ebookFi = document.getElementById('ebook-fi');
 const uiEl = document.getElementById('ui');
 const progbar = document.getElementById('progbar');
 const emEl = document.getElementById('em');
@@ -547,6 +576,10 @@ const lastBtn = document.getElementById('last-btn');
 const pageInput = document.getElementById('page-input');
 const pageGoBtn = document.getElementById('page-go');
 const shareBtn = document.getElementById('share-btn');
+const projectBtn = document.getElementById('project-btn');
+const projectMenu = document.getElementById('project-menu');
+const projectSaveAction = document.getElementById('project-save-action');
+const projectLoadAction = document.getElementById('project-load-action');
 const resetBtn = document.getElementById('reset-btn');
 const themeBtn = document.getElementById('theme-btn');
 const themeIcon = document.getElementById('theme-icon');
@@ -560,6 +593,7 @@ let pdfDoc = null, total = 0, curSpread = 0, spreads = [];
 let baseScale = 1, zoomF = 1, busy = false;
 let viewMode = 'double';
 let loadedSourceURL = '';
+let currentPdfBytes = null;
 let isPanning = false, panStartX = 0, panStartY = 0, panScrollL = 0, panScrollT = 0;
 let layoutRefreshTimer = null;
 
@@ -751,6 +785,7 @@ document.addEventListener('keydown', e => {
     else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') go(curSpread - 1, 'l');
   }
   if (e.key === 'Escape') helpModal.classList.remove('on');
+  if (e.key === 'Escape') closeProjectMenu();
 });
 
 function applyZoom() { zv.textContent = Math.round(zoomF * 100) + '%'; renderSpread(curSpread); }
@@ -761,6 +796,11 @@ document.getElementById('zf').addEventListener('click', () => { zoomF = 1; apply
 function spreadOfPage(pageNumber) {
   const idx = spreads.findIndex(s => s.pages.includes(pageNumber));
   return idx >= 0 ? idx : 0;
+}
+
+function applyViewModeUI(mode) {
+  singleBtn.classList.toggle('on', mode === 'single');
+  doubleBtn.classList.toggle('on', mode === 'double');
 }
 
 function jumpToPage() {
@@ -783,8 +823,7 @@ pageInput.addEventListener('keydown', (e) => {
 async function setViewMode(mode) {
   if (mode !== 'single' && mode !== 'double') return;
   viewMode = mode;
-  singleBtn.classList.toggle('on', mode === 'single');
-  doubleBtn.classList.toggle('on', mode === 'double');
+  applyViewModeUI(mode);
 
   if (!pdfDoc || total < 1) return;
 
@@ -839,21 +878,32 @@ document.addEventListener('fullscreenchange', () => {
 });
 
 async function openArrayBuffer(ab, sourceURL = '') {
+  return openArrayBufferWithState(ab, sourceURL, null);
+}
+
+async function openArrayBufferWithState(ab, sourceURL = '', restoreState = null) {
   showLoader('PDF 렌더링 중…');
   try {
     const doc = await pdfjsLib.getDocument({ data: ab }).promise;
     pdfDoc = doc;
     total = doc.numPages;
     pageInput.max = String(total);
+    currentPdfBytes = new Uint8Array(ab.slice(0));
+
+    if (restoreState?.viewMode === 'single' || restoreState?.viewMode === 'double') {
+      viewMode = restoreState.viewMode;
+    }
+    applyViewModeUI(viewMode);
     spreads = buildSpreads(total, viewMode);
-    curSpread = 0;
-    zoomF = 1;
-    loadedSourceURL = sourceURL;
+    const restoreSpread = Number.isInteger(restoreState?.spread) ? restoreState.spread : 0;
+    curSpread = Math.max(0, Math.min(restoreSpread, spreads.length - 1));
+    zoomF = (typeof restoreState?.zoom === 'number' && restoreState.zoom >= .4 && restoreState.zoom <= 2.5) ? restoreState.zoom : 1;
+    loadedSourceURL = restoreState?.sourceURL || sourceURL;
 
     await recalcBaseScale();
-    zv.textContent = '100%';
+    zv.textContent = Math.round(zoomF * 100) + '%';
 
-    await renderSpread(0);
+    await renderSpread(curSpread);
     land.style.display = 'none';
     showPDFViewer();
     hideLoader();
@@ -876,6 +926,110 @@ fi.addEventListener('change', function() {
   showLoader('파일 읽는 중…');
   reader.readAsArrayBuffer(file);
   this.value = '';
+});
+
+function bytesToBase64(bytes) {
+  let binary = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+function base64ToArrayBuffer(base64) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+}
+
+function saveEbookProject() {
+  if (!pdfDoc || !currentPdfBytes) {
+    showErr('저장할 PDF가 없습니다. 먼저 PDF를 열어주세요.');
+    return;
+  }
+  const payload = {
+    type: 'easybook-project',
+    version: 1,
+    savedAt: new Date().toISOString(),
+    state: {
+      viewMode,
+      spread: curSpread,
+      zoom: zoomF,
+      theme: document.body.classList.contains('light') ? 'light' : 'dark',
+      sourceURL: loadedSourceURL || ''
+    },
+    pdfBase64: bytesToBase64(currentPdfBytes)
+  };
+  const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `easybook-${Date.now()}.ebook`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(a.href);
+  showSuccess('프로젝트(.ebook) 파일로 저장했습니다.');
+}
+
+function openProjectMenu() {
+  projectMenu.classList.add('on');
+  projectBtn.setAttribute('aria-expanded', 'true');
+}
+
+function closeProjectMenu() {
+  projectMenu.classList.remove('on');
+  projectBtn.setAttribute('aria-expanded', 'false');
+}
+
+async function loadEbookProjectFile(file) {
+  if (!file) return;
+  showLoader('프로젝트 파일을 불러오는 중…');
+  try {
+    const text = await file.text();
+    const payload = JSON.parse(text);
+    if (payload?.type !== 'easybook-project' || payload?.version !== 1 || !payload?.pdfBase64) {
+      throw new Error('지원하지 않는 프로젝트 파일입니다.');
+    }
+    if (payload?.state?.theme === 'light' || payload?.state?.theme === 'dark') {
+      localStorage.setItem('easybook-theme', payload.state.theme);
+      applyTheme(payload.state.theme);
+    }
+    const ab = base64ToArrayBuffer(payload.pdfBase64);
+    await openArrayBufferWithState(ab, payload?.state?.sourceURL || '', payload.state || null);
+    showSuccess('프로젝트를 불러왔습니다.');
+  } catch (e) {
+    hideLoader();
+    showErr('프로젝트 불러오기 실패: ' + (e.message || String(e)));
+    console.error(e);
+  } finally {
+    ebookFi.value = '';
+  }
+}
+
+projectBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (projectMenu.classList.contains('on')) closeProjectMenu();
+  else openProjectMenu();
+});
+projectSaveAction.addEventListener('click', () => {
+  closeProjectMenu();
+  saveEbookProject();
+});
+projectLoadAction.addEventListener('click', () => {
+  closeProjectMenu();
+  ebookFi.click();
+});
+ebookFi.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  loadEbookProjectFile(file);
+});
+document.addEventListener('click', (e) => {
+  if (!projectMenu.classList.contains('on')) return;
+  if (e.target === projectBtn || projectBtn.contains(e.target)) return;
+  if (e.target === projectMenu || projectMenu.contains(e.target)) return;
+  closeProjectMenu();
 });
 
 document.body.addEventListener('dragenter', e => { e.preventDefault(); document.body.classList.add('drag-over'); });
@@ -1015,6 +1169,7 @@ shareBtn.addEventListener('click', async () => {
 
 function resetViewer() {
   pdfDoc = null;
+  currentPdfBytes = null;
   total = 0;
   curSpread = 0;
   spreads = [];
