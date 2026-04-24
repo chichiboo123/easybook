@@ -240,6 +240,23 @@ body.drag-over #main::after{
 }
 .nav:disabled{ opacity:.2; cursor:default; pointer-events:none; }
 #pb{ left:12px; } #nb{ right:12px; }
+.tap-zone{
+  position:absolute;
+  bottom:0;
+  width:min(220px, 24vw);
+  height:min(220px, 30%);
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  z-index:45;
+  color:transparent;
+}
+.tap-zone:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:-2px;
+}
+#tap-prev{ left:0; }
+#tap-next{ right:0; }
 
 /* === 페이지 넘김 애니메이션 === */
 .flip-sheet{
@@ -379,6 +396,10 @@ body.light #sm{ background:#D1FAE5; color:#065F46; border-color:#A7F3D0; }
   .nav{ width:48px; height:48px; bottom:16px; top:auto; transform:none; }
   .nav:hover{ transform:none; }
   #pb{ left:12px; } #nb{ right:12px; }
+  .tap-zone{
+    width:34vw;
+    height:34%;
+  }
   #kbh{ display:none; }
   #embed-wrap{ width:96vw; height:78vh; }
   #embed-hint{ font-size:10px; padding:5px 8px; right:8px; top:8px; }
@@ -453,6 +474,8 @@ body.light #sm{ background:#D1FAE5; color:#065F46; border-color:#A7F3D0; }
     </div>
     <button class="nav" id="pb">‹</button>
     <button class="nav" id="nb">›</button>
+    <button class="tap-zone" id="tap-prev" aria-label="이전 페이지로 이동"></button>
+    <button class="tap-zone" id="tap-next" aria-label="다음 페이지로 이동"></button>
     <div id="kbh">← → 키로 이동</div>
     <div id="progbar" style="width:0%"></div>
   </div>
@@ -500,6 +523,8 @@ const ltl = document.getElementById('ltl'), rtl = document.getElementById('rtl')
 const spl = document.getElementById('spl');
 const ln = document.getElementById('ln'), rn = document.getElementById('rn');
 const pb = document.getElementById('pb'), nb = document.getElementById('nb');
+const tapPrev = document.getElementById('tap-prev');
+const tapNext = document.getElementById('tap-next');
 const pi = document.getElementById('pi');
 const ldr = document.getElementById('ldr'), lt = document.getElementById('lt');
 const zv = document.getElementById('zv');
@@ -689,6 +714,14 @@ async function go(idx, dir) {
 
 pb.addEventListener('click', () => go(curSpread - 1, 'l'));
 nb.addEventListener('click', () => go(curSpread + 1, 'r'));
+tapPrev.addEventListener('click', () => {
+  if (zoomF > 1 || vwr.style.display !== 'flex') return;
+  go(curSpread - 1, 'l');
+});
+tapNext.addEventListener('click', () => {
+  if (zoomF > 1 || vwr.style.display !== 'flex') return;
+  go(curSpread + 1, 'r');
+});
 firstBtn.addEventListener('click', () => go(0));
 lastBtn.addEventListener('click', () => go(spreads.length - 1));
 document.addEventListener('keydown', e => {
