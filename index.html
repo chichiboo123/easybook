@@ -58,12 +58,18 @@ body{
 }
 .page-jump{ display:inline-flex; align-items:center; gap:4px; margin-left:2px; }
 .page-jump input{
-  width:64px; height:32px; padding:0 8px; border-radius:6px;
+  width:78px; height:32px; padding:0 8px; border-radius:6px;
   border:1px solid var(--border);
   background:var(--bg); color:var(--ui);
   font-size:13px; outline:none; transition:border-color .15s;
 }
 .page-jump input:focus{ border-color:var(--accent); }
+.page-jump input::-webkit-outer-spin-button,
+.page-jump input::-webkit-inner-spin-button{
+  -webkit-appearance:none;
+  margin:0;
+}
+.page-jump input[type=number]{ -moz-appearance:textfield; }
 
 /* === 아이콘 버튼 & 파일 레이블 === */
 .icon-btn, #file-label{
@@ -234,6 +240,23 @@ body.drag-over #main::after{
 }
 .nav:disabled{ opacity:.2; cursor:default; pointer-events:none; }
 #pb{ left:12px; } #nb{ right:12px; }
+.book-tap{
+  position:absolute;
+  bottom:0;
+  width:22%;
+  height:22%;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  z-index:55;
+  color:transparent;
+}
+.book-tap:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:-2px;
+}
+#book-tap-prev{ left:0; }
+#book-tap-next{ right:0; }
 
 /* === 페이지 넘김 애니메이션 === */
 .flip-sheet{
@@ -352,14 +375,24 @@ body.light #sm{ background:#D1FAE5; color:#065F46; border-color:#A7F3D0; }
 }
 #ft a{ color:var(--accent); text-decoration:none; }
 #ft a:hover{ text-decoration:underline; }
+body.slideshow #tb,
+body.slideshow #ub,
+body.slideshow #ft{ display:none; }
+body.slideshow #main{ padding:0; }
 
 /* === 모바일 반응형 === */
 @media (max-width: 900px){
-  #tb{ padding:10px 12px; gap:6px; }
-  #tb h1{ font-size:15px; margin-right:0; }
+  #tb{
+    padding:10px 12px; gap:6px;
+    overflow-x:auto; overflow-y:hidden;
+    scrollbar-width:thin;
+  }
+  #tb h1{ font-size:14px; margin-right:0; flex-shrink:0; }
+  .tb-group{ flex-shrink:0; }
+  #pi{ flex-shrink:0; }
   .sep{ display:none; }
   .btn, #file-label, #lub, .icon-btn{ min-height:36px; padding:7px 10px; font-size:13px; }
-  .page-jump input{ width:56px; height:34px; }
+  .page-jump input{ width:72px; height:34px; }
   #ub{ padding:8px 12px; gap:8px; }
   #ub label{ display:none; }
   #land{ padding:32px 16px; gap:16px; }
@@ -367,11 +400,22 @@ body.light #sm{ background:#D1FAE5; color:#065F46; border-color:#A7F3D0; }
   .nav{ width:48px; height:48px; bottom:16px; top:auto; transform:none; }
   .nav:hover{ transform:none; }
   #pb{ left:12px; } #nb{ right:12px; }
+  .book-tap{
+    width:26%;
+    height:26%;
+  }
   #kbh{ display:none; }
   #embed-wrap{ width:96vw; height:78vh; }
   #embed-hint{ font-size:10px; padding:5px 8px; right:8px; top:8px; }
   #vwr{ padding:16px 8px 64px; }
   #ft{ font-size:11px; padding:7px 10px; }
+}
+@media (max-width: 640px){
+  #tb h1{ display:none; }
+  #tb{ padding:8px 8px; }
+  #ub{ padding:8px; }
+  #ui{ min-width:0; }
+  #lub{ padding:6px 12px; }
 }
 </style>
 </head>
@@ -407,6 +451,7 @@ body.light #sm{ background:#D1FAE5; color:#065F46; border-color:#A7F3D0; }
     <button class="icon-btn" id="reset-btn" title="초기화" aria-label="초기화"><span class="mat">restart_alt</span></button>
     <button class="icon-btn" id="share-btn" title="공유 링크 생성" aria-label="공유 링크 생성"><span class="mat">share</span></button>
     <button class="icon-btn" id="theme-btn" title="다크/라이트 모드" aria-label="다크/라이트 모드"><span class="mat" id="theme-icon">dark_mode</span></button>
+    <button class="icon-btn" id="fullscreen-btn" title="전체화면" aria-label="전체화면"><span class="mat" id="fullscreen-icon">fullscreen</span></button>
     <button class="icon-btn" id="help-btn" title="사용법" aria-label="사용법"><span class="mat">help</span></button>
   </div>
 </div>
@@ -431,6 +476,8 @@ body.light #sm{ background:#D1FAE5; color:#065F46; border-color:#A7F3D0; }
       <div class="slot" id="ls"><div class="pg-layer"><canvas id="lc"></canvas><div class="text-layer" id="ltl"></div></div><span class="pn l" id="ln"></span></div>
       <div id="spl"></div>
       <div class="slot" id="rs"><div class="pg-layer"><canvas id="rc"></canvas><div class="text-layer" id="rtl"></div></div><span class="pn r" id="rn"></span></div>
+      <button class="book-tap" id="book-tap-prev" aria-label="이전 페이지로 이동"></button>
+      <button class="book-tap" id="book-tap-next" aria-label="다음 페이지로 이동"></button>
     </div>
     <button class="nav" id="pb">‹</button>
     <button class="nav" id="nb">›</button>
@@ -481,6 +528,8 @@ const ltl = document.getElementById('ltl'), rtl = document.getElementById('rtl')
 const spl = document.getElementById('spl');
 const ln = document.getElementById('ln'), rn = document.getElementById('rn');
 const pb = document.getElementById('pb'), nb = document.getElementById('nb');
+const tapPrev = document.getElementById('book-tap-prev');
+const tapNext = document.getElementById('book-tap-next');
 const pi = document.getElementById('pi');
 const ldr = document.getElementById('ldr'), lt = document.getElementById('lt');
 const zv = document.getElementById('zv');
@@ -499,6 +548,8 @@ const shareBtn = document.getElementById('share-btn');
 const resetBtn = document.getElementById('reset-btn');
 const themeBtn = document.getElementById('theme-btn');
 const themeIcon = document.getElementById('theme-icon');
+const fullscreenBtn = document.getElementById('fullscreen-btn');
+const fullscreenIcon = document.getElementById('fullscreen-icon');
 const helpModal = document.getElementById('help-modal');
 const embedWrap = document.getElementById('embed-wrap');
 const embedFrame = document.getElementById('embed-frame');
@@ -670,6 +721,14 @@ async function go(idx, dir) {
 
 pb.addEventListener('click', () => go(curSpread - 1, 'l'));
 nb.addEventListener('click', () => go(curSpread + 1, 'r'));
+tapPrev.addEventListener('click', () => {
+  if (zoomF > 1 || vwr.style.display !== 'flex') return;
+  go(curSpread - 1, 'l');
+});
+tapNext.addEventListener('click', () => {
+  if (zoomF > 1 || vwr.style.display !== 'flex') return;
+  go(curSpread + 1, 'r');
+});
 firstBtn.addEventListener('click', () => go(0));
 lastBtn.addEventListener('click', () => go(spreads.length - 1));
 document.addEventListener('keydown', e => {
@@ -737,6 +796,32 @@ function toggleTheme() {
 }
 
 themeBtn.addEventListener('click', toggleTheme);
+
+function updateFullscreenUI() {
+  const isFullscreen = !!document.fullscreenElement;
+  document.body.classList.toggle('slideshow', isFullscreen);
+  fullscreenIcon.textContent = isFullscreen ? 'fullscreen_exit' : 'fullscreen';
+  fullscreenBtn.title = isFullscreen ? '전체화면 종료' : '전체화면';
+  fullscreenBtn.setAttribute('aria-label', isFullscreen ? '전체화면 종료' : '전체화면');
+  if (pdfDoc && vwr.style.display === 'flex') {
+    recalcBaseScale().then(() => renderSpread(curSpread));
+  }
+}
+
+async function toggleFullscreen() {
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else {
+      await document.documentElement.requestFullscreen();
+    }
+  } catch (e) {
+    showErr('전체화면 전환 실패: ' + (e.message || '브라우저가 기능을 지원하지 않습니다.'));
+  }
+}
+
+fullscreenBtn.addEventListener('click', toggleFullscreen);
+document.addEventListener('fullscreenchange', updateFullscreenUI);
 
 async function openArrayBuffer(ab, sourceURL = '') {
   showLoader('PDF 렌더링 중…');
@@ -935,7 +1020,8 @@ function resetViewer() {
 
 resetBtn.addEventListener('click', resetViewer);
 
-applyTheme(localStorage.getItem('easybook-theme') || 'light');
+const savedTheme = localStorage.getItem('easybook-theme');
+applyTheme(savedTheme === 'dark' ? 'dark' : 'light');
 
 const qp = new URLSearchParams(location.search);
 const initialPDF = qp.get('pdf');
