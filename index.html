@@ -375,6 +375,10 @@ body.light #sm{ background:#D1FAE5; color:#065F46; border-color:#A7F3D0; }
 }
 #ft a{ color:var(--accent); text-decoration:none; }
 #ft a:hover{ text-decoration:underline; }
+body.slideshow #tb,
+body.slideshow #ub,
+body.slideshow #ft{ display:none; }
+body.slideshow #main{ padding:0; }
 
 /* === 모바일 반응형 === */
 @media (max-width: 900px){
@@ -447,6 +451,7 @@ body.light #sm{ background:#D1FAE5; color:#065F46; border-color:#A7F3D0; }
     <button class="icon-btn" id="reset-btn" title="초기화" aria-label="초기화"><span class="mat">restart_alt</span></button>
     <button class="icon-btn" id="share-btn" title="공유 링크 생성" aria-label="공유 링크 생성"><span class="mat">share</span></button>
     <button class="icon-btn" id="theme-btn" title="다크/라이트 모드" aria-label="다크/라이트 모드"><span class="mat" id="theme-icon">dark_mode</span></button>
+    <button class="icon-btn" id="fullscreen-btn" title="전체화면" aria-label="전체화면"><span class="mat" id="fullscreen-icon">fullscreen</span></button>
     <button class="icon-btn" id="help-btn" title="사용법" aria-label="사용법"><span class="mat">help</span></button>
   </div>
 </div>
@@ -545,6 +550,8 @@ const shareBtn = document.getElementById('share-btn');
 const resetBtn = document.getElementById('reset-btn');
 const themeBtn = document.getElementById('theme-btn');
 const themeIcon = document.getElementById('theme-icon');
+const fullscreenBtn = document.getElementById('fullscreen-btn');
+const fullscreenIcon = document.getElementById('fullscreen-icon');
 const helpModal = document.getElementById('help-modal');
 const embedWrap = document.getElementById('embed-wrap');
 const embedFrame = document.getElementById('embed-frame');
@@ -791,6 +798,32 @@ function toggleTheme() {
 }
 
 themeBtn.addEventListener('click', toggleTheme);
+
+function updateFullscreenUI() {
+  const isFullscreen = !!document.fullscreenElement;
+  document.body.classList.toggle('slideshow', isFullscreen);
+  fullscreenIcon.textContent = isFullscreen ? 'fullscreen_exit' : 'fullscreen';
+  fullscreenBtn.title = isFullscreen ? '전체화면 종료' : '전체화면';
+  fullscreenBtn.setAttribute('aria-label', isFullscreen ? '전체화면 종료' : '전체화면');
+  if (pdfDoc && vwr.style.display === 'flex') {
+    recalcBaseScale().then(() => renderSpread(curSpread));
+  }
+}
+
+async function toggleFullscreen() {
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else {
+      await document.documentElement.requestFullscreen();
+    }
+  } catch (e) {
+    showErr('전체화면 전환 실패: ' + (e.message || '브라우저가 기능을 지원하지 않습니다.'));
+  }
+}
+
+fullscreenBtn.addEventListener('click', toggleFullscreen);
+document.addEventListener('fullscreenchange', updateFullscreenUI);
 
 async function openArrayBuffer(ab, sourceURL = '') {
   showLoader('PDF 렌더링 중…');
