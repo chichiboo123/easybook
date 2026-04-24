@@ -561,6 +561,18 @@ let baseScale = 1, zoomF = 1, busy = false;
 let viewMode = 'double';
 let loadedSourceURL = '';
 let isPanning = false, panStartX = 0, panStartY = 0, panScrollL = 0, panScrollT = 0;
+let layoutRefreshTimer = null;
+
+function refreshViewerLayout(delay = 0) {
+  clearTimeout(layoutRefreshTimer);
+  layoutRefreshTimer = setTimeout(() => {
+    requestAnimationFrame(() => {
+      if (pdfDoc && vwr.style.display === 'flex') {
+        recalcBaseScale().then(() => renderSpread(curSpread));
+      }
+    });
+  }, delay);
+}
 
 function showPDFViewer() {
   embedWrap.style.display = 'none';
@@ -805,9 +817,6 @@ function updateFullscreenUI() {
   fullscreenIcon.textContent = isFullscreen ? 'fullscreen_exit' : 'fullscreen';
   fullscreenBtn.title = isFullscreen ? '전체화면 종료' : '전체화면';
   fullscreenBtn.setAttribute('aria-label', isFullscreen ? '전체화면 종료' : '전체화면');
-  if (pdfDoc && vwr.style.display === 'flex') {
-    recalcBaseScale().then(() => renderSpread(curSpread));
-  }
 }
 
 async function toggleFullscreen() {
@@ -823,7 +832,11 @@ async function toggleFullscreen() {
 }
 
 fullscreenBtn.addEventListener('click', toggleFullscreen);
-document.addEventListener('fullscreenchange', updateFullscreenUI);
+document.addEventListener('fullscreenchange', () => {
+  updateFullscreenUI();
+  refreshViewerLayout(0);
+  refreshViewerLayout(120);
+});
 
 async function openArrayBuffer(ab, sourceURL = '') {
   showLoader('PDF 렌더링 중…');
@@ -1043,9 +1056,7 @@ document.getElementById('help-btn').addEventListener('click', () => helpModal.cl
 document.getElementById('help-close').addEventListener('click', () => helpModal.classList.remove('on'));
 helpModal.addEventListener('click', (e) => { if (e.target === helpModal) helpModal.classList.remove('on'); });
 window.addEventListener('resize', () => {
-  if (pdfDoc && vwr.style.display === 'flex') {
-    recalcBaseScale().then(() => renderSpread(curSpread));
-  }
+  refreshViewerLayout(0);
 });
 
 vwr.addEventListener('pointerdown', (e) => {
