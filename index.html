@@ -444,7 +444,7 @@ body.slideshow #main{ padding:0; }
 <input type="file" id="ebook-fi" accept=".ebook,application/json" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;">
 
 <div id="tb">
-  <h1>Easy book</h1>
+  <h1 id="app-title">Easy book</h1>
 
   <div class="tb-group">
     <button class="icon-btn" id="view-single" title="한쪽보기" aria-label="한쪽보기"><span class="mat">article</span></button>
@@ -476,16 +476,24 @@ body.slideshow #main{ padding:0; }
         <button class="menu-action" id="project-load-action" role="menuitem">프로젝트 불러오기</button>
       </div>
     </div>
-    <button class="icon-btn" id="reset-btn" title="초기화" aria-label="초기화"><span class="mat">restart_alt</span></button>
     <button class="icon-btn" id="share-btn" title="공유 링크 생성" aria-label="공유 링크 생성"><span class="mat">share</span></button>
-    <button class="icon-btn" id="theme-btn" title="다크/라이트 모드" aria-label="다크/라이트 모드"><span class="mat" id="theme-icon">dark_mode</span></button>
     <button class="icon-btn" id="fullscreen-btn" title="전체화면" aria-label="전체화면"><span class="mat" id="fullscreen-icon">fullscreen</span></button>
+    <button class="icon-btn" id="theme-btn" title="다크/라이트 모드" aria-label="다크/라이트 모드"><span class="mat" id="theme-icon">dark_mode</span></button>
+    <div class="menu-wrap">
+      <button class="icon-btn" id="lang-btn" title="언어 선택" aria-label="언어 선택" aria-expanded="false" aria-controls="lang-menu"><span class="mat">translate</span></button>
+      <div class="menu-panel" id="lang-menu" role="menu" aria-label="언어 선택">
+        <button class="menu-action" id="lang-ko" role="menuitem">한국어</button>
+        <button class="menu-action" id="lang-en" role="menuitem">English</button>
+        <button class="menu-action" id="lang-ja" role="menuitem">日本語</button>
+      </div>
+    </div>
     <button class="icon-btn" id="help-btn" title="사용법" aria-label="사용법"><span class="mat">help</span></button>
+    <button class="icon-btn" id="reset-btn" title="초기화" aria-label="초기화"><span class="mat">restart_alt</span></button>
   </div>
 </div>
 
 <div id="ub">
-  <label for="ui">URL</label>
+  <label for="ui" id="url-label">URL</label>
   <input type="text" id="ui" placeholder="Google Drive 공유 링크 또는 직접 PDF URL">
   <button id="lub">불러오기</button>
 </div>
@@ -493,10 +501,10 @@ body.slideshow #main{ padding:0; }
 <div id="main">
   <div id="land">
     <div class="bi mat" aria-hidden="true">menu_book</div>
-    <h2>Easy book으로<br>PDF를 진짜 책처럼</h2>
-    <p>PDF 파일을 선택하거나 드래그해서 놓으세요.<br>한쪽보기/두쪽보기를 언제든 전환할 수 있습니다.</p>
+    <h2 id="land-title">Easy book으로<br>PDF를 진짜 책처럼</h2>
+    <p id="land-desc">PDF 파일을 선택하거나 드래그해서 놓으세요.<br>한쪽보기/두쪽보기를 언제든 전환할 수 있습니다.</p>
     <label id="file-label-big" for="fi">PDF 파일 선택</label>
-    <p style="font-size:11px;color:var(--muted);margin-top:-10px;">또는 URL 입력란에 Google Drive 공유 링크를 붙여넣으세요</p>
+    <p id="land-url-hint" style="font-size:11px;color:var(--muted);margin-top:-10px;">또는 URL 입력란에 Google Drive 공유 링크를 붙여넣으세요</p>
   </div>
 
   <div id="vwr">
@@ -526,15 +534,8 @@ body.slideshow #main{ padding:0; }
 
   <div id="help-modal">
     <div id="help-card">
-      <h3>Easy book 사용법</h3>
-      <ol>
-        <li><b>파일 열기</b>: 상단 <b>파일 열기</b> 버튼으로 PDF를 불러오거나 드래그 앤 드롭하세요.</li>
-        <li><b>URL 열기</b>: Google Drive 공유 링크 또는 PDF 직접 URL을 입력 후 <b>불러오기</b>를 누르세요.</li>
-        <li><b>보기 모드</b>: <b>한쪽보기</b>/<b>두쪽보기</b>로 전환할 수 있고, 표지·뒷표지는 항상 단면으로 표시됩니다.</li>
-        <li><b>넘기기</b>: 좌/우 화살표 버튼 또는 키보드 <b>← →</b>로 페이지를 넘길 수 있습니다.</li>
-        <li><b>공유 링크</b>: URL로 연 문서는 <b>공유 링크</b> 버튼으로 같은 eBook 링크를 복사해 공유할 수 있습니다.</li>
-        <li><b>Drive 실패 시</b>: 브라우저 CORS/쿠키 정책 때문에 PDF.js 로딩이 막히면 자동으로 Drive 임베드 뷰어로 전환됩니다. (임베드에서는 페이지 이동을 Google 뷰어가 직접 처리)</li>
-      </ol>
+      <h3 id="help-title">Easy book 사용법</h3>
+      <ol id="help-list"></ol>
       <button class="btn" id="help-close">닫기</button>
     </div>
   </div>
@@ -580,14 +581,31 @@ const projectBtn = document.getElementById('project-btn');
 const projectMenu = document.getElementById('project-menu');
 const projectSaveAction = document.getElementById('project-save-action');
 const projectLoadAction = document.getElementById('project-load-action');
+const langBtn = document.getElementById('lang-btn');
+const langMenu = document.getElementById('lang-menu');
+const langKoBtn = document.getElementById('lang-ko');
+const langEnBtn = document.getElementById('lang-en');
+const langJaBtn = document.getElementById('lang-ja');
 const resetBtn = document.getElementById('reset-btn');
 const themeBtn = document.getElementById('theme-btn');
 const themeIcon = document.getElementById('theme-icon');
 const fullscreenBtn = document.getElementById('fullscreen-btn');
 const fullscreenIcon = document.getElementById('fullscreen-icon');
 const helpModal = document.getElementById('help-modal');
+const helpTitle = document.getElementById('help-title');
+const helpList = document.getElementById('help-list');
 const embedWrap = document.getElementById('embed-wrap');
 const embedFrame = document.getElementById('embed-frame');
+const appTitle = document.getElementById('app-title');
+const urlLabel = document.getElementById('url-label');
+const landTitle = document.getElementById('land-title');
+const landDesc = document.getElementById('land-desc');
+const landUrlHint = document.getElementById('land-url-hint');
+const fileLabelBig = document.getElementById('file-label-big');
+const kbh = document.getElementById('kbh');
+const helpCloseBtn = document.getElementById('help-close');
+const loadUrlBtn = document.getElementById('lub');
+const footerLink = document.querySelector('#ft a');
 
 let pdfDoc = null, total = 0, curSpread = 0, spreads = [];
 let baseScale = 1, zoomF = 1, busy = false;
@@ -596,6 +614,154 @@ let loadedSourceURL = '';
 let currentPdfBytes = null;
 let isPanning = false, panStartX = 0, panStartY = 0, panScrollL = 0, panScrollT = 0;
 let layoutRefreshTimer = null;
+let currentLang = 'ko';
+
+const I18N = {
+  ko: {
+    appTitle: 'Easy book',
+    urlLabel: 'URL',
+    urlPlaceholder: 'Google Drive 공유 링크 또는 직접 PDF URL',
+    loadBtn: '불러오기',
+    landTitle: 'Easy book으로<br>PDF를 진짜 책처럼',
+    landDesc: 'PDF 파일을 선택하거나 드래그해서 놓으세요.<br>한쪽보기/두쪽보기를 언제든 전환할 수 있습니다.',
+    landUrlHint: '또는 URL 입력란에 Google Drive 공유 링크를 붙여넣으세요',
+    fileSelect: 'PDF 파일 선택',
+    helpTitle: 'Easy book 사용법',
+    helpClose: '닫기',
+    footer: 'Created by. 교육뮤지컬 꿈꾸는 치수쌤',
+    kbh: '← → 키로 이동',
+    projectMenuAria: '프로젝트 작업 선택',
+    projectSave: '프로젝트 저장',
+    projectLoad: '프로젝트 불러오기',
+    langMenuAria: '언어 선택',
+    fileOpen: '파일 열기',
+    projectTitle: '프로젝트 저장/불러오기',
+    shareTitle: '공유 링크 생성',
+    fullscreenTitle: '전체화면',
+    themeTitle: '다크/라이트 모드',
+    langTitle: '언어 선택',
+    helpTitleBtn: '사용법',
+    resetTitle: '초기화',
+    helpItems: [
+      '<b>파일 열기</b>: 상단 <b>파일 열기</b> 버튼으로 PDF를 불러오거나 드래그 앤 드롭하세요.',
+      '<b>URL 열기</b>: Google Drive 공유 링크 또는 PDF 직접 URL을 입력 후 <b>불러오기</b>를 누르세요.',
+      '<b>보기 모드</b>: <b>한쪽보기</b>/<b>두쪽보기</b>로 전환할 수 있고, 표지·뒷표지는 항상 단면으로 표시됩니다.',
+      '<b>넘기기</b>: 좌/우 화살표 버튼 또는 키보드 <b>← →</b>로 페이지를 넘길 수 있습니다.',
+      '<b>공유 링크</b>: URL로 연 문서는 <b>공유 링크</b> 버튼으로 같은 eBook 링크를 복사해 공유할 수 있습니다.',
+      '<b>개인정보</b>: 파일은 브라우저에서만 처리되며 Easy book 서버에 저장되지 않습니다.',
+      '<b>Drive 실패 시</b>: 브라우저 CORS/쿠키 정책 때문에 PDF.js 로딩이 막히면 자동으로 Drive 임베드 뷰어로 전환됩니다. (임베드에서는 페이지 이동을 Google 뷰어가 직접 처리)'
+    ]
+  },
+  en: {
+    appTitle: 'Easy book',
+    urlLabel: 'URL',
+    urlPlaceholder: 'Google Drive share link or direct PDF URL',
+    loadBtn: 'Load',
+    landTitle: 'Read PDF like<br>a real book with Easy book',
+    landDesc: 'Select a PDF file or drag and drop it here.<br>You can switch single/double view anytime.',
+    landUrlHint: 'Or paste a Google Drive share link into the URL field',
+    fileSelect: 'Select PDF file',
+    helpTitle: 'How to use Easy book',
+    helpClose: 'Close',
+    footer: 'Created by. Educational Musical Dreaming Teacher Chisu',
+    kbh: 'Navigate with ← → keys',
+    projectMenuAria: 'Project actions',
+    projectSave: 'Save project',
+    projectLoad: 'Load project',
+    langMenuAria: 'Select language',
+    fileOpen: 'Open file',
+    projectTitle: 'Project save/load',
+    shareTitle: 'Create share link',
+    fullscreenTitle: 'Fullscreen',
+    themeTitle: 'Dark/Light mode',
+    langTitle: 'Language',
+    helpTitleBtn: 'Help',
+    resetTitle: 'Reset',
+    helpItems: [
+      '<b>Open file</b>: Use the top <b>Open file</b> button, or drag & drop a PDF.',
+      '<b>Open URL</b>: Enter a Google Drive share link or direct PDF URL and click <b>Load</b>.',
+      '<b>View mode</b>: Switch between <b>Single</b>/<b>Double</b> view. Cover and back cover are always single-page.',
+      '<b>Navigation</b>: Use arrow buttons or keyboard <b>← →</b> keys.',
+      '<b>Share link</b>: For URL-loaded files, copy a shareable eBook link with <b>Share</b>.',
+      '<b>Privacy</b>: Files are processed in your browser and are not stored on the Easy book server.',
+      '<b>If Drive fails</b>: If PDF.js loading is blocked by browser policy, it automatically switches to Drive embedded viewer.'
+    ]
+  },
+  ja: {
+    appTitle: 'Easy book',
+    urlLabel: 'URL',
+    urlPlaceholder: 'Google Drive共有リンクまたはPDF直接URL',
+    loadBtn: '読み込み',
+    landTitle: 'Easy bookで<br>PDFを本のように読む',
+    landDesc: 'PDFファイルを選択するか、ここにドラッグ＆ドロップしてください。<br>単ページ/見開きはいつでも切り替えできます。',
+    landUrlHint: 'またはURL入力欄にGoogle Drive共有リンクを貼り付けてください',
+    fileSelect: 'PDFファイルを選択',
+    helpTitle: 'Easy bookの使い方',
+    helpClose: '閉じる',
+    footer: 'Created by. 教育ミュージカル 夢見るチス先生',
+    kbh: '← → キーで移動',
+    projectMenuAria: 'プロジェクト操作',
+    projectSave: 'プロジェクト保存',
+    projectLoad: 'プロジェクト読込',
+    langMenuAria: '言語選択',
+    fileOpen: 'ファイルを開く',
+    projectTitle: 'プロジェクト保存/読込',
+    shareTitle: '共有リンク作成',
+    fullscreenTitle: '全画面',
+    themeTitle: 'ダーク/ライトモード',
+    langTitle: '言語',
+    helpTitleBtn: '使い方',
+    resetTitle: '初期化',
+    helpItems: [
+      '<b>ファイルを開く</b>: 上部の<b>ファイルを開く</b>ボタン、またはドラッグ＆ドロップでPDFを読み込みます。',
+      '<b>URLを開く</b>: Google Drive共有リンクまたはPDF URLを入力して<b>読み込み</b>を押します。',
+      '<b>表示モード</b>: <b>単ページ</b>/<b>見開き</b>を切り替えできます。表紙と裏表紙は常に単ページです。',
+      '<b>ページ移動</b>: 左右矢印ボタンまたはキーボード<b>← →</b>で移動できます。',
+      '<b>共有リンク</b>: URLから開いた文書は<b>共有</b>ボタンでリンクをコピーできます。',
+      '<b>プライバシー</b>: ファイルはブラウザ内でのみ処理され、Easy bookサーバーには保存されません。',
+      '<b>Drive読み込み失敗時</b>: ブラウザポリシーでPDF.jsがブロックされる場合、自動でDrive埋め込みビューアーに切り替えます。'
+    ]
+  }
+};
+
+function setButtonTextAndA11y(el, text) {
+  el.title = text;
+  el.setAttribute('aria-label', text);
+}
+
+function applyLanguage(lang) {
+  const safeLang = I18N[lang] ? lang : 'ko';
+  currentLang = safeLang;
+  localStorage.setItem('easybook-lang', safeLang);
+  document.documentElement.lang = safeLang;
+  const t = I18N[safeLang];
+  appTitle.textContent = t.appTitle;
+  urlLabel.textContent = t.urlLabel;
+  uiEl.placeholder = t.urlPlaceholder;
+  loadUrlBtn.textContent = t.loadBtn;
+  landTitle.innerHTML = t.landTitle;
+  landDesc.innerHTML = t.landDesc;
+  landUrlHint.textContent = t.landUrlHint;
+  fileLabelBig.textContent = t.fileSelect;
+  helpTitle.textContent = t.helpTitle;
+  helpCloseBtn.textContent = t.helpClose;
+  footerLink.textContent = t.footer;
+  kbh.textContent = t.kbh;
+  projectMenu.setAttribute('aria-label', t.projectMenuAria);
+  langMenu.setAttribute('aria-label', t.langMenuAria);
+  projectSaveAction.textContent = t.projectSave;
+  projectLoadAction.textContent = t.projectLoad;
+  helpList.innerHTML = t.helpItems.map(item => `<li>${item}</li>`).join('');
+  setButtonTextAndA11y(document.getElementById('file-label'), t.fileOpen);
+  setButtonTextAndA11y(projectBtn, t.projectTitle);
+  setButtonTextAndA11y(shareBtn, t.shareTitle);
+  const fsTxt = document.fullscreenElement ? `${t.fullscreenTitle} 종료` : t.fullscreenTitle;
+  setButtonTextAndA11y(fullscreenBtn, fsTxt);
+  setButtonTextAndA11y(themeBtn, t.themeTitle);
+  setButtonTextAndA11y(langBtn, t.langTitle);
+  setButtonTextAndA11y(document.getElementById('help-btn'), t.helpTitleBtn);
+  setButtonTextAndA11y(resetBtn, t.resetTitle);
+}
 
 function refreshViewerLayout(delay = 0) {
   clearTimeout(layoutRefreshTimer);
@@ -786,6 +952,7 @@ document.addEventListener('keydown', e => {
   }
   if (e.key === 'Escape') helpModal.classList.remove('on');
   if (e.key === 'Escape') closeProjectMenu();
+  if (e.key === 'Escape') closeLangMenu();
 });
 
 function applyZoom() { zv.textContent = Math.round(zoomF * 100) + '%'; renderSpread(curSpread); }
@@ -854,8 +1021,10 @@ function updateFullscreenUI() {
   const isFullscreen = !!document.fullscreenElement;
   document.body.classList.toggle('slideshow', isFullscreen);
   fullscreenIcon.textContent = isFullscreen ? 'fullscreen_exit' : 'fullscreen';
-  fullscreenBtn.title = isFullscreen ? '전체화면 종료' : '전체화면';
-  fullscreenBtn.setAttribute('aria-label', isFullscreen ? '전체화면 종료' : '전체화면');
+  const t = I18N[currentLang] || I18N.ko;
+  const label = isFullscreen ? `${t.fullscreenTitle} 종료` : t.fullscreenTitle;
+  fullscreenBtn.title = label;
+  fullscreenBtn.setAttribute('aria-label', label);
 }
 
 async function toggleFullscreen() {
@@ -976,11 +1145,23 @@ function saveEbookProject() {
 function openProjectMenu() {
   projectMenu.classList.add('on');
   projectBtn.setAttribute('aria-expanded', 'true');
+  closeLangMenu();
 }
 
 function closeProjectMenu() {
   projectMenu.classList.remove('on');
   projectBtn.setAttribute('aria-expanded', 'false');
+}
+
+function openLangMenu() {
+  langMenu.classList.add('on');
+  langBtn.setAttribute('aria-expanded', 'true');
+  closeProjectMenu();
+}
+
+function closeLangMenu() {
+  langMenu.classList.remove('on');
+  langBtn.setAttribute('aria-expanded', 'false');
 }
 
 async function loadEbookProjectFile(file) {
@@ -1021,15 +1202,29 @@ projectLoadAction.addEventListener('click', () => {
   closeProjectMenu();
   ebookFi.click();
 });
+langBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (langMenu.classList.contains('on')) closeLangMenu();
+  else openLangMenu();
+});
+langKoBtn.addEventListener('click', () => { closeLangMenu(); applyLanguage('ko'); });
+langEnBtn.addEventListener('click', () => { closeLangMenu(); applyLanguage('en'); });
+langJaBtn.addEventListener('click', () => { closeLangMenu(); applyLanguage('ja'); });
 ebookFi.addEventListener('change', (e) => {
   const file = e.target.files[0];
   loadEbookProjectFile(file);
 });
 document.addEventListener('click', (e) => {
-  if (!projectMenu.classList.contains('on')) return;
-  if (e.target === projectBtn || projectBtn.contains(e.target)) return;
-  if (e.target === projectMenu || projectMenu.contains(e.target)) return;
-  closeProjectMenu();
+  if (projectMenu.classList.contains('on')) {
+    if (!(e.target === projectBtn || projectBtn.contains(e.target) || e.target === projectMenu || projectMenu.contains(e.target))) {
+      closeProjectMenu();
+    }
+  }
+  if (langMenu.classList.contains('on')) {
+    if (!(e.target === langBtn || langBtn.contains(e.target) || e.target === langMenu || langMenu.contains(e.target))) {
+      closeLangMenu();
+    }
+  }
 });
 
 document.body.addEventListener('dragenter', e => { e.preventDefault(); document.body.classList.add('drag-over'); });
@@ -1192,6 +1387,7 @@ resetBtn.addEventListener('click', resetViewer);
 
 const savedTheme = localStorage.getItem('easybook-theme');
 applyTheme(savedTheme === 'dark' ? 'dark' : 'light');
+applyLanguage(localStorage.getItem('easybook-lang') || 'ko');
 
 const qp = new URLSearchParams(location.search);
 const initialPDF = qp.get('pdf');
