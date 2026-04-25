@@ -487,6 +487,7 @@ body.slideshow #main{ padding:0; }
         <button class="menu-action" id="lang-ja" role="menuitem">日本語</button>
       </div>
     </div>
+    <button class="icon-btn" id="reset-btn" title="초기화" aria-label="초기화"><span class="mat">restart_alt</span></button>
     <button class="icon-btn" id="help-btn" title="사용법" aria-label="사용법"><span class="mat">help</span></button>
     <button class="icon-btn" id="reset-btn" title="초기화" aria-label="초기화"><span class="mat">restart_alt</span></button>
   </div>
@@ -621,6 +622,7 @@ const I18N = {
     appTitle: 'Easy book',
     urlLabel: 'URL',
     urlPlaceholder: 'Google Drive 공유 링크 또는 직접 PDF URL',
+    pagePlaceholder: '페이지',
     loadBtn: '불러오기',
     landTitle: 'Easy book으로<br>PDF를 진짜 책처럼',
     landDesc: 'PDF 파일을 선택하거나 드래그해서 놓으세요.<br>한쪽보기/두쪽보기를 언제든 전환할 수 있습니다.',
@@ -648,7 +650,7 @@ const I18N = {
       '<b>보기 모드</b>: <b>한쪽보기</b>/<b>두쪽보기</b>로 전환할 수 있고, 표지·뒷표지는 항상 단면으로 표시됩니다.',
       '<b>넘기기</b>: 좌/우 화살표 버튼 또는 키보드 <b>← →</b>로 페이지를 넘길 수 있습니다.',
       '<b>공유 링크</b>: URL로 연 문서는 <b>공유 링크</b> 버튼으로 같은 eBook 링크를 복사해 공유할 수 있습니다.',
-      '<b>개인정보</b>: 파일은 브라우저에서만 처리되며 Easy book 서버에 저장되지 않습니다.',
+      '<b>개인정보</b>: 파일은 브라우저에서만 처리되며 Easy book 서버에 저장되지 않습니다. 서버 업로드가 없으니 안심하고 사용하세요.',
       '<b>Drive 실패 시</b>: 브라우저 CORS/쿠키 정책 때문에 PDF.js 로딩이 막히면 자동으로 Drive 임베드 뷰어로 전환됩니다. (임베드에서는 페이지 이동을 Google 뷰어가 직접 처리)'
     ]
   },
@@ -656,6 +658,7 @@ const I18N = {
     appTitle: 'Easy book',
     urlLabel: 'URL',
     urlPlaceholder: 'Google Drive share link or direct PDF URL',
+    pagePlaceholder: 'Page',
     loadBtn: 'Load',
     landTitle: 'Read PDF like<br>a real book with Easy book',
     landDesc: 'Select a PDF file or drag and drop it here.<br>You can switch single/double view anytime.',
@@ -683,7 +686,7 @@ const I18N = {
       '<b>View mode</b>: Switch between <b>Single</b>/<b>Double</b> view. Cover and back cover are always single-page.',
       '<b>Navigation</b>: Use arrow buttons or keyboard <b>← →</b> keys.',
       '<b>Share link</b>: For URL-loaded files, copy a shareable eBook link with <b>Share</b>.',
-      '<b>Privacy</b>: Files are processed in your browser and are not stored on the Easy book server.',
+      '<b>Privacy</b>: Files are processed only in your browser and are never stored on the Easy book server, so you can use it with confidence.',
       '<b>If Drive fails</b>: If PDF.js loading is blocked by browser policy, it automatically switches to Drive embedded viewer.'
     ]
   },
@@ -691,6 +694,7 @@ const I18N = {
     appTitle: 'Easy book',
     urlLabel: 'URL',
     urlPlaceholder: 'Google Drive共有リンクまたはPDF直接URL',
+    pagePlaceholder: 'ページ',
     loadBtn: '読み込み',
     landTitle: 'Easy bookで<br>PDFを本のように読む',
     landDesc: 'PDFファイルを選択するか、ここにドラッグ＆ドロップしてください。<br>単ページ/見開きはいつでも切り替えできます。',
@@ -718,7 +722,7 @@ const I18N = {
       '<b>表示モード</b>: <b>単ページ</b>/<b>見開き</b>を切り替えできます。表紙と裏表紙は常に単ページです。',
       '<b>ページ移動</b>: 左右矢印ボタンまたはキーボード<b>← →</b>で移動できます。',
       '<b>共有リンク</b>: URLから開いた文書は<b>共有</b>ボタンでリンクをコピーできます。',
-      '<b>プライバシー</b>: ファイルはブラウザ内でのみ処理され、Easy bookサーバーには保存されません。',
+      '<b>プライバシー</b>: ファイルはブラウザ内でのみ処理され、Easy bookサーバーには一切保存されないため安心して利用できます。',
       '<b>Drive読み込み失敗時</b>: ブラウザポリシーでPDF.jsがブロックされる場合、自動でDrive埋め込みビューアーに切り替えます。'
     ]
   }
@@ -738,6 +742,7 @@ function applyLanguage(lang) {
   appTitle.textContent = t.appTitle;
   urlLabel.textContent = t.urlLabel;
   uiEl.placeholder = t.urlPlaceholder;
+  pageInput.placeholder = t.pagePlaceholder;
   loadUrlBtn.textContent = t.loadBtn;
   landTitle.innerHTML = t.landTitle;
   landDesc.innerHTML = t.landDesc;
