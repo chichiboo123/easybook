@@ -457,7 +457,7 @@ body.slideshow #main{ padding:0; }
     <span class="sep"></span>
     <button class="icon-btn" id="first-btn" title="첫 페이지" aria-label="첫 페이지"><span class="mat">first_page</span></button>
     <div class="page-jump">
-      <input type="number" id="page-input" min="1" step="1" placeholder="페이지">
+      <input type="number" id="page-input" min="1" step="1" placeholder="">
       <button class="icon-btn" id="page-go" title="페이지 이동" aria-label="페이지 이동"><span class="mat">subdirectory_arrow_right</span></button>
     </div>
     <button class="icon-btn" id="last-btn" title="끝 페이지" aria-label="끝 페이지"><span class="mat">last_page</span></button>
@@ -469,6 +469,7 @@ body.slideshow #main{ padding:0; }
 
   <div class="tb-group">
     <label id="file-label" for="fi" title="파일 열기" aria-label="파일 열기"><span class="mat">folder_open</span></label>
+    <button class="icon-btn" id="reset-btn" title="초기화" aria-label="초기화"><span class="mat">restart_alt</span></button>
     <div class="menu-wrap">
       <button class="icon-btn" id="project-btn" title="프로젝트 저장/불러오기" aria-label="프로젝트 저장/불러오기" aria-expanded="false" aria-controls="project-menu"><span class="mat">save_as</span></button>
       <div class="menu-panel" id="project-menu" role="menu" aria-label="프로젝트 작업 선택">
@@ -487,7 +488,6 @@ body.slideshow #main{ padding:0; }
         <button class="menu-action" id="lang-ja" role="menuitem">日本語</button>
       </div>
     </div>
-    <button class="icon-btn" id="reset-btn" title="초기화" aria-label="초기화"><span class="mat">restart_alt</span></button>
     <button class="icon-btn" id="help-btn" title="사용법" aria-label="사용법"><span class="mat">help</span></button>
     <button class="icon-btn" id="reset-btn" title="초기화" aria-label="초기화"><span class="mat">restart_alt</span></button>
   </div>
@@ -650,7 +650,7 @@ const I18N = {
       '<b>보기 모드</b>: <b>한쪽보기</b>/<b>두쪽보기</b>로 전환할 수 있고, 표지·뒷표지는 항상 단면으로 표시됩니다.',
       '<b>넘기기</b>: 좌/우 화살표 버튼 또는 키보드 <b>← →</b>로 페이지를 넘길 수 있습니다.',
       '<b>공유 링크</b>: URL로 연 문서는 <b>공유 링크</b> 버튼으로 같은 eBook 링크를 복사해 공유할 수 있습니다.',
-      '<b>개인정보</b>: 파일은 브라우저에서만 처리되며 Easy book 서버에 저장되지 않습니다. 서버 업로드가 없으니 안심하고 사용하세요.',
+      '<b>개인정보</b>: 파일은 브라우저에서만 처리되며 Easy book 서버에 저장되지 않습니다. 서버로 업로드되지 않으니 안심하고 사용하셔도 됩니다.',
       '<b>Drive 실패 시</b>: 브라우저 CORS/쿠키 정책 때문에 PDF.js 로딩이 막히면 자동으로 Drive 임베드 뷰어로 전환됩니다. (임베드에서는 페이지 이동을 Google 뷰어가 직접 처리)'
     ]
   },
