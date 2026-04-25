@@ -392,6 +392,7 @@ body.light #sm{ background:#D1FAE5; color:#065F46; border-color:#A7F3D0; }
   text-align:center; padding:8px 12px;
   font-size:12px; color:var(--muted);
 }
+#privacy-note{ margin:0 0 3px; font-size:12px; line-height:1.5; }
 #ft a{ color:var(--accent); text-decoration:none; }
 #ft a:hover{ text-decoration:underline; }
 body.slideshow #tb,
@@ -429,6 +430,7 @@ body.slideshow #main{ padding:0; }
   #embed-hint{ font-size:10px; padding:5px 8px; right:8px; top:8px; }
   #vwr{ padding:16px 8px 64px; }
   #ft{ font-size:11px; padding:7px 10px; }
+  #privacy-note{ font-size:11px; }
 }
 @media (max-width: 640px){
   #tb h1{ display:none; }
@@ -470,6 +472,7 @@ body.slideshow #main{ padding:0; }
   <div class="tb-group">
     <label id="file-label" for="fi" title="파일 열기" aria-label="파일 열기"><span class="mat">folder_open</span></label>
     <button class="icon-btn" id="reset-btn" title="초기화" aria-label="초기화"><span class="mat">restart_alt</span></button>
+    <span class="sep"></span>
     <div class="menu-wrap">
       <button class="icon-btn" id="project-btn" title="프로젝트 저장/불러오기" aria-label="프로젝트 저장/불러오기" aria-expanded="false" aria-controls="project-menu"><span class="mat">save_as</span></button>
       <div class="menu-panel" id="project-menu" role="menu" aria-label="프로젝트 작업 선택">
@@ -489,7 +492,6 @@ body.slideshow #main{ padding:0; }
       </div>
     </div>
     <button class="icon-btn" id="help-btn" title="사용법" aria-label="사용법"><span class="mat">help</span></button>
-    <button class="icon-btn" id="reset-btn" title="초기화" aria-label="초기화"><span class="mat">restart_alt</span></button>
   </div>
 </div>
 
@@ -543,6 +545,7 @@ body.slideshow #main{ padding:0; }
 </div>
 
 <footer id="ft">
+  <p id="privacy-note">개인정보 보호 안내: 파일과 URL 데이터는 브라우저에서만 처리되며 Easy book 서버에 저장되지 않습니다.</p>
   <a href="https://litt.ly/chichiboo" target="_blank" rel="noopener noreferrer">Created by. 교육뮤지컬 꿈꾸는 치수쌤</a>
 </footer>
 
@@ -607,6 +610,7 @@ const kbh = document.getElementById('kbh');
 const helpCloseBtn = document.getElementById('help-close');
 const loadUrlBtn = document.getElementById('lub');
 const footerLink = document.querySelector('#ft a');
+const privacyNote = document.getElementById('privacy-note');
 
 let pdfDoc = null, total = 0, curSpread = 0, spreads = [];
 let baseScale = 1, zoomF = 1, busy = false;
@@ -631,6 +635,7 @@ const I18N = {
     helpTitle: 'Easy book 사용법',
     helpClose: '닫기',
     footer: 'Created by. 교육뮤지컬 꿈꾸는 치수쌤',
+    privacyNote: '개인정보 보호 안내: 파일과 URL 데이터는 브라우저에서만 처리되며 Easy book 서버에 저장되지 않습니다.',
     kbh: '← → 키로 이동',
     projectMenuAria: '프로젝트 작업 선택',
     projectSave: '프로젝트 저장',
@@ -667,6 +672,7 @@ const I18N = {
     helpTitle: 'How to use Easy book',
     helpClose: 'Close',
     footer: 'Created by. Educational Musical Dreaming Teacher Chisu',
+    privacyNote: 'Privacy notice: File and URL data are processed only in your browser and are never stored on the Easy book server.',
     kbh: 'Navigate with ← → keys',
     projectMenuAria: 'Project actions',
     projectSave: 'Save project',
@@ -703,6 +709,7 @@ const I18N = {
     helpTitle: 'Easy bookの使い方',
     helpClose: '閉じる',
     footer: 'Created by. 教育ミュージカル 夢見るチス先生',
+    privacyNote: 'プライバシー案内：ファイルとURLデータはブラウザ内でのみ処理され、Easy bookサーバーには保存されません。',
     kbh: '← → キーで移動',
     projectMenuAria: 'プロジェクト操作',
     projectSave: 'プロジェクト保存',
@@ -751,6 +758,7 @@ function applyLanguage(lang) {
   helpTitle.textContent = t.helpTitle;
   helpCloseBtn.textContent = t.helpClose;
   footerLink.textContent = t.footer;
+  privacyNote.textContent = t.privacyNote;
   kbh.textContent = t.kbh;
   projectMenu.setAttribute('aria-label', t.projectMenuAria);
   langMenu.setAttribute('aria-label', t.langMenuAria);
