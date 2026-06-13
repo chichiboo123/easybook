@@ -274,8 +274,10 @@ body.drag-over #main::after{
 .book-tap{
   position:absolute;
   bottom:0;
-  width:22%;
-  height:22%;
+  width:14%;
+  height:14%;
+  max-width:90px;
+  max-height:110px;
   border:none;
   background:transparent;
   cursor:pointer;
@@ -478,8 +480,10 @@ body.slideshow #main{ padding:0; }
   .nav:hover{ transform:none; }
   #pb{ left:12px; } #nb{ right:12px; }
   .book-tap{
-    width:26%;
-    height:26%;
+    width:18%;
+    height:18%;
+    max-width:90px;
+    max-height:110px;
   }
   #kbh{ display:none; }
   #embed-wrap{ width:96vw; height:78vh; }
@@ -508,21 +512,16 @@ body.slideshow #main{ padding:0; }
     <button class="icon-btn" id="view-toggle" title="한쪽/두쪽 보기 전환" aria-label="한쪽/두쪽 보기 전환"><span class="mat" id="view-icon">auto_stories</span></button>
     <span class="sep"></span>
     <button class="icon-btn" id="zo" title="축소" aria-label="축소"><span class="mat">zoom_out</span></button>
-    <span id="zv">100%</span>
     <button class="icon-btn" id="zi" title="확대" aria-label="확대"><span class="mat">zoom_in</span></button>
-    <button class="icon-btn" id="zf" title="화면 맞춤" aria-label="화면 맞춤"><span class="mat">fit_screen</span></button>
     <span class="sep"></span>
-    <button class="icon-btn" id="first-btn" title="첫 페이지" aria-label="첫 페이지"><span class="mat">first_page</span></button>
     <div class="page-jump">
       <input type="number" id="page-input" min="1" step="1" placeholder="">
       <button class="icon-btn" id="page-go" title="페이지 이동" aria-label="페이지 이동"><span class="mat">subdirectory_arrow_right</span></button>
     </div>
-    <button class="icon-btn" id="last-btn" title="끝 페이지" aria-label="끝 페이지"><span class="mat">last_page</span></button>
   </div>
 
-  <span id="pi"></span>
-
   <div class="tb-spacer"></div>
+  <span id="pi"></span>
 
   <div class="tb-group">
     <label id="file-label" for="fi" title="파일 열기" aria-label="파일 열기"><span class="mat">folder_open</span></label>
@@ -534,6 +533,10 @@ body.slideshow #main{ padding:0; }
         <button class="menu-action" id="project-save-action" role="menuitem">프로젝트 저장</button>
         <button class="menu-action" id="project-load-action" role="menuitem">프로젝트 불러오기</button>
         <button class="menu-action" id="share-action" role="menuitem">공유 링크 복사</button>
+        <div class="menu-sep"></div>
+        <button class="menu-action" id="first-action" role="menuitem">첫 페이지</button>
+        <button class="menu-action" id="last-action" role="menuitem">끝 페이지</button>
+        <button class="menu-action" id="fit-action" role="menuitem">화면 맞춤</button>
         <div class="menu-sep"></div>
         <div class="menu-label" id="lang-label">언어</div>
         <button class="menu-action lang-opt" id="lang-ko" role="menuitem">한국어</button>
@@ -617,7 +620,6 @@ const tapPrev = document.getElementById('book-tap-prev');
 const tapNext = document.getElementById('book-tap-next');
 const pi = document.getElementById('pi');
 const ldr = document.getElementById('ldr'), lt = document.getElementById('lt');
-const zv = document.getElementById('zv');
 const fi = document.getElementById('fi');
 const ebookFi = document.getElementById('ebook-fi');
 const uiEl = document.getElementById('ui');
@@ -626,8 +628,9 @@ const emEl = document.getElementById('em');
 const smEl = document.getElementById('sm');
 const viewToggleBtn = document.getElementById('view-toggle');
 const viewIcon = document.getElementById('view-icon');
-const firstBtn = document.getElementById('first-btn');
-const lastBtn = document.getElementById('last-btn');
+const firstAction = document.getElementById('first-action');
+const lastAction = document.getElementById('last-action');
+const fitAction = document.getElementById('fit-action');
 const pageInput = document.getElementById('page-input');
 const pageGoBtn = document.getElementById('page-go');
 const moreBtn = document.getElementById('more-btn');
@@ -698,6 +701,9 @@ const I18N = {
     themeTitle: '다크/라이트 모드',
     langTitle: '언어',
     helpTitleBtn: '사용법',
+    firstPage: '첫 페이지',
+    lastPage: '끝 페이지',
+    fitScreen: '화면 맞춤',
     resetTitle: '초기화',
     moreTitle: '더보기',
     viewToggleTitle: '한쪽/두쪽 보기 전환',
@@ -737,6 +743,9 @@ const I18N = {
     themeTitle: 'Dark/Light mode',
     langTitle: 'Language',
     helpTitleBtn: 'Help',
+    firstPage: 'First page',
+    lastPage: 'Last page',
+    fitScreen: 'Fit to screen',
     resetTitle: 'Reset',
     moreTitle: 'More',
     viewToggleTitle: 'Toggle single/double view',
@@ -776,6 +785,9 @@ const I18N = {
     themeTitle: 'ダーク/ライトモード',
     langTitle: '言語',
     helpTitleBtn: '使い方',
+    firstPage: '最初のページ',
+    lastPage: '最後のページ',
+    fitScreen: '画面に合わせる',
     resetTitle: '初期化',
     moreTitle: 'その他',
     viewToggleTitle: '単ページ/見開き切替',
@@ -820,6 +832,9 @@ function applyLanguage(lang) {
   projectSaveAction.textContent = t.projectSave;
   projectLoadAction.textContent = t.projectLoad;
   shareAction.textContent = t.shareTitle;
+  firstAction.textContent = t.firstPage;
+  lastAction.textContent = t.lastPage;
+  fitAction.textContent = t.fitScreen;
   langLabel.textContent = t.langTitle;
   resetAction.textContent = t.resetTitle;
   helpAction.textContent = t.helpTitleBtn;
@@ -858,10 +873,14 @@ async function recalcBaseScale() {
   const pg0 = await pdfDoc.getPage(1);
   const vp0 = pg0.getViewport({ scale: 1 });
   const mainEl = document.getElementById('main');
-  const mh = mainEl.clientHeight * 0.9;
+  const style = getComputedStyle(vwr);
+  const padX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+  const padY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+  const availW = mainEl.clientWidth - padX;
+  const availH = mainEl.clientHeight - padY;
   const narrow = mainEl.clientWidth < 760;
-  const mw = (mainEl.clientWidth - (narrow ? 32 : 140)) * (viewMode === 'double' && !narrow ? 0.48 : 0.92);
-  baseScale = Math.min(mh / vp0.height, mw / vp0.width, 1.9);
+  const effectiveW = availW * (viewMode === 'double' && !narrow ? 0.48 : 0.92);
+  baseScale = Math.min(availH / vp0.height, effectiveW / vp0.width);
 }
 
 function centerViewer() {
@@ -907,25 +926,30 @@ function buildSpreads(n, mode = 'double') {
 async function renderPage(canvas, textLayer, num) {
   if (!num || num < 1 || num > total) {
     canvas.width = 0; canvas.height = 0;
+    canvas.style.width = '0px'; canvas.style.height = '0px';
     textLayer.innerHTML = '';
     textLayer.style.width = '0px';
     textLayer.style.height = '0px';
     return;
   }
+  const dpr = window.devicePixelRatio || 1;
   const pg = await pdfDoc.getPage(num);
-  const vp = pg.getViewport({ scale: baseScale * zoomF });
+  const vpLogical = pg.getViewport({ scale: baseScale * zoomF });
+  const vp = pg.getViewport({ scale: baseScale * zoomF * dpr });
   canvas.width = vp.width;
   canvas.height = vp.height;
+  canvas.style.width = vpLogical.width + 'px';
+  canvas.style.height = vpLogical.height + 'px';
   await pg.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
   try {
     const textContent = await pg.getTextContent();
     textLayer.innerHTML = '';
-    textLayer.style.width = `${vp.width}px`;
-    textLayer.style.height = `${vp.height}px`;
+    textLayer.style.width = `${vpLogical.width}px`;
+    textLayer.style.height = `${vpLogical.height}px`;
     await pdfjsLib.renderTextLayer({
       textContent,
       container: textLayer,
-      viewport: vp,
+      viewport: vpLogical,
       textDivs: []
     }).promise;
   } catch {
@@ -934,6 +958,9 @@ async function renderPage(canvas, textLayer, num) {
 }
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function logicalW(c) { return c.style.width ? parseFloat(c.style.width) : c.width; }
+function logicalH(c) { return c.style.height ? parseFloat(c.style.height) : c.height; }
 
 // 캔버스를 동기적으로 복제 (img.src 비동기 로드로 인한 첫 프레임 깜빡임 방지)
 function cloneCanvasFace(src) {
@@ -1018,8 +1045,8 @@ async function renderSpread(idx) {
     rs.style.display = 'block';
     ltl.innerHTML = '';
     await renderPage(rc, rtl, sp.pages[0]);
-    rs.style.width = rc.width + 'px';
-    rs.style.height = rc.height + 'px';
+    rs.style.width = logicalW(rc) + 'px';
+    rs.style.height = logicalH(rc) + 'px';
     rn.textContent = sp.type === 'cover' ? '표지' : sp.type === 'back' ? '뒷표지' : sp.pages[0];
     ln.textContent = '';
   } else {
@@ -1027,9 +1054,9 @@ async function renderSpread(idx) {
     ls.style.display = 'block';
     rs.style.display = 'block';
     await Promise.all([renderPage(lc, ltl, sp.pages[0]), renderPage(rc, rtl, sp.pages[1] || null)]);
-    const h = Math.max(lc.height, rc.height);
-    ls.style.width = lc.width + 'px'; ls.style.height = h + 'px';
-    rs.style.width = rc.width + 'px'; rs.style.height = h + 'px';
+    const h = Math.max(logicalH(lc), logicalH(rc));
+    ls.style.width = logicalW(lc) + 'px'; ls.style.height = h + 'px';
+    rs.style.width = logicalW(rc) + 'px'; rs.style.height = h + 'px';
     ln.textContent = sp.pages[0];
     rn.textContent = sp.pages[1] || '';
   }
@@ -1067,8 +1094,9 @@ tapNext.addEventListener('click', () => {
   if (zoomF > 1 || vwr.style.display !== 'flex') return;
   go(curSpread + 1, 'r');
 });
-firstBtn.addEventListener('click', () => go(0));
-lastBtn.addEventListener('click', () => go(spreads.length - 1));
+firstAction.addEventListener('click', () => { closeMoreMenu(); go(0); });
+lastAction.addEventListener('click', () => { closeMoreMenu(); go(spreads.length - 1); });
+fitAction.addEventListener('click', () => { closeMoreMenu(); zoomF = 1; renderSpread(curSpread); });
 document.addEventListener('keydown', e => {
   if (vwr.style.display === 'flex') {
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(curSpread + 1, 'r');
@@ -1080,10 +1108,9 @@ document.addEventListener('keydown', e => {
   }
 });
 
-function applyZoom() { zv.textContent = Math.round(zoomF * 100) + '%'; renderSpread(curSpread); }
+function applyZoom() { renderSpread(curSpread); }
 document.getElementById('zi').addEventListener('click', () => { zoomF = Math.min(zoomF + .15, 2.5); applyZoom(); });
 document.getElementById('zo').addEventListener('click', () => { zoomF = Math.max(zoomF - .15, .4); applyZoom(); });
-document.getElementById('zf').addEventListener('click', () => { zoomF = 1; applyZoom(); });
 
 function spreadOfPage(pageNumber) {
   const idx = spreads.findIndex(s => s.pages.includes(pageNumber));
@@ -1196,8 +1223,6 @@ async function openArrayBufferWithState(ab, sourceURL = '', restoreState = null)
     loadedSourceURL = restoreState?.sourceURL || sourceURL;
 
     await recalcBaseScale();
-    zv.textContent = Math.round(zoomF * 100) + '%';
-
     await renderSpread(curSpread);
     land.style.display = 'none';
     showPDFViewer();
@@ -1490,7 +1515,6 @@ function resetViewer() {
   zoomF = 1;
   loadedSourceURL = '';
   pi.textContent = '';
-  zv.textContent = '100%';
   pageInput.value = '';
   pageInput.max = '';
   progbar.style.width = '0%';
