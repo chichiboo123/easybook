@@ -69,6 +69,13 @@ body{
 }
 .menu-action:hover{ background:rgba(96,165,250,.12); color:var(--accent); }
 body.light .menu-action:hover{ background:rgba(29,78,216,.08); }
+.menu-action.active{ color:var(--accent); font-weight:700; }
+.menu-sep{ height:1px; background:var(--border); margin:6px 4px; }
+.menu-label{
+  font-size:10px; font-weight:700; color:var(--muted);
+  letter-spacing:.06em; text-transform:uppercase;
+  padding:6px 10px 2px;
+}
 .tb-spacer{ flex:1; }
 .mat{
   font-family:'Material Symbols Rounded'; font-weight:500;
@@ -283,68 +290,70 @@ body.drag-over #main::after{
 #book-tap-next{ right:0; }
 
 /* === 페이지 넘김 애니메이션 (종이 질감 3D) === */
+/* 회전 씬(원근감) */
 .flip-scene{
   position:absolute; top:0; height:100%;
   pointer-events:none; z-index:30;
-  perspective:1000px;
+  perspective:1800px; perspective-origin:center center;
 }
+/* 반대쪽 정지 페이지: 회전 중 이전 내용을 덮어 즉시 교체(깜빡임) 방지 */
+.flip-static{
+  position:absolute; top:0; height:100%;
+  pointer-events:none; z-index:28; overflow:hidden;
+  background:var(--paper);
+}
+.flip-static canvas{ width:100%; height:100%; display:block; }
+/* 뒤집히는 한 장의 종이 */
 .flip-card{
   position:absolute; inset:0;
   transform-style:preserve-3d;
+  will-change:transform;
 }
-.flip-card.to-left{
-  transform-origin:left center;
-  animation:f-left .62s cubic-bezier(.4,0,.2,1) forwards;
-}
-.flip-card.to-right{
-  transform-origin:right center;
-  animation:f-right .62s cubic-bezier(.4,0,.2,1) forwards;
-}
+.flip-card.to-left{ transform-origin:left center; }
+.flip-card.to-right{ transform-origin:right center; }
+/* .go 클래스가 붙는 순간 회전 시작 (그 전엔 정지 상태로 새 페이지 렌더를 가림) */
+.flip-card.go.to-left{ animation:f-left var(--flip-dur,.6s) cubic-bezier(.2,.62,.25,1) forwards; }
+.flip-card.go.to-right{ animation:f-right var(--flip-dur,.6s) cubic-bezier(.2,.62,.25,1) forwards; }
 .flip-face{
   position:absolute; inset:0;
   backface-visibility:hidden; overflow:hidden;
-  background:#fafaf8;
+  background:var(--paper);
 }
-.flip-face img{
-  position:absolute; inset:0; width:100%; height:100%;
-  display:block; object-fit:fill; pointer-events:none;
+.flip-face canvas{ width:100%; height:100%; display:block; }
+/* 앞면 접힘 그림자(fold crease) — 회전축(spine) 쪽으로 음영 */
+.flip-face.front::before{
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:2;
 }
-/* 앞면 접힘 그림자 (fold crease) — spine 쪽(회전축)에 집중 */
-.flip-card.to-left .flip-face.front::after{
-  content:''; position:absolute; inset:0; pointer-events:none;
-  background:linear-gradient(to right,rgba(0,0,0,.22) 0%,rgba(0,0,0,.06) 18%,transparent 38%);
+.flip-card.to-left .flip-face.front::before{
+  background:linear-gradient(to right,rgba(0,0,0,.20),rgba(0,0,0,.04) 16%,transparent 36%);
 }
-.flip-card.to-right .flip-face.front::after{
-  content:''; position:absolute; inset:0; pointer-events:none;
-  background:linear-gradient(to left,rgba(0,0,0,.22) 0%,rgba(0,0,0,.06) 18%,transparent 38%);
+.flip-card.to-right .flip-face.front::before{
+  background:linear-gradient(to left,rgba(0,0,0,.20),rgba(0,0,0,.04) 16%,transparent 36%);
 }
-/* 뒷면: 종이 질감 */
+/* 뒷면: 따뜻한 종이 질감 */
 .flip-face.back{
   transform:rotateY(180deg);
-  background:linear-gradient(160deg,#f7f4ee 0%,#ede9e2 55%,#f4f0e8 100%);
+  background:linear-gradient(155deg,#f8f5ef 0%,#ece7df 55%,#f3efe7 100%);
 }
 .flip-face.back::after{
   content:''; position:absolute; inset:0; pointer-events:none;
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.06'/%3E%3C/svg%3E");
-  opacity:.7; mix-blend-mode:multiply;
+  opacity:.6; mix-blend-mode:multiply;
 }
-/* 목적지 페이지에 드리워지는 그림자 */
-.flip-cast{
-  position:absolute; top:0; height:100%;
-  pointer-events:none;
-  animation:f-cast .62s ease-in-out forwards;
+/* 뒷면 접힘 그림자 — 회전축 쪽 */
+.flip-card.to-left .flip-face.back::before{
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(to left,rgba(0,0,0,.16),transparent 34%);
 }
-.flip-cast.to-left{
-  right:100%; width:65%;
-  background:linear-gradient(to left,rgba(0,0,0,.26),transparent);
+.flip-card.to-right .flip-face.back::before{
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(to right,rgba(0,0,0,.16),transparent 34%);
 }
-.flip-cast.to-right{
-  left:100%; width:65%;
-  background:linear-gradient(to right,rgba(0,0,0,.26),transparent);
+@keyframes f-left  { from{ transform:rotateY(0) } to{ transform:rotateY(-180deg) } }
+@keyframes f-right { from{ transform:rotateY(0) } to{ transform:rotateY( 180deg) } }
+@media (prefers-reduced-motion: reduce){
+  .flip-card.go.to-left, .flip-card.go.to-right{ animation-duration:.001s; }
 }
-@keyframes f-left  { from{transform:rotateY(0)} to{transform:rotateY(-180deg)} }
-@keyframes f-right { from{transform:rotateY(0)} to{transform:rotateY( 180deg)} }
-@keyframes f-cast  { 0%{opacity:0} 30%{opacity:1} 100%{opacity:0} }
 
 /* === 임베드 뷰어 === */
 #embed-wrap{
@@ -496,8 +505,7 @@ body.slideshow #main{ padding:0; }
   <h1 id="app-title">Easy book</h1>
 
   <div class="tb-group">
-    <button class="icon-btn" id="view-single" title="한쪽보기" aria-label="한쪽보기"><span class="mat">article</span></button>
-    <button class="icon-btn on" id="view-double" title="두쪽보기" aria-label="두쪽보기"><span class="mat">auto_stories</span></button>
+    <button class="icon-btn" id="view-toggle" title="한쪽/두쪽 보기 전환" aria-label="한쪽/두쪽 보기 전환"><span class="mat" id="view-icon">auto_stories</span></button>
     <span class="sep"></span>
     <button class="icon-btn" id="zo" title="축소" aria-label="축소"><span class="mat">zoom_out</span></button>
     <span id="zv">100%</span>
@@ -518,27 +526,24 @@ body.slideshow #main{ padding:0; }
 
   <div class="tb-group">
     <label id="file-label" for="fi" title="파일 열기" aria-label="파일 열기"><span class="mat">folder_open</span></label>
-    <button class="icon-btn" id="reset-btn" title="초기화" aria-label="초기화"><span class="mat">restart_alt</span></button>
-    <span class="sep"></span>
+    <button class="icon-btn" id="theme-btn" title="다크/라이트 모드" aria-label="다크/라이트 모드"><span class="mat" id="theme-icon">dark_mode</span></button>
+    <button class="icon-btn" id="fullscreen-btn" title="전체화면" aria-label="전체화면"><span class="mat" id="fullscreen-icon">fullscreen</span></button>
     <div class="menu-wrap">
-      <button class="icon-btn" id="project-btn" title="프로젝트 저장/불러오기" aria-label="프로젝트 저장/불러오기" aria-expanded="false" aria-controls="project-menu"><span class="mat">save_as</span></button>
-      <div class="menu-panel" id="project-menu" role="menu" aria-label="프로젝트 작업 선택">
+      <button class="icon-btn" id="more-btn" title="더보기" aria-label="더보기" aria-expanded="false" aria-controls="more-menu"><span class="mat">more_vert</span></button>
+      <div class="menu-panel" id="more-menu" role="menu" aria-label="더보기">
         <button class="menu-action" id="project-save-action" role="menuitem">프로젝트 저장</button>
         <button class="menu-action" id="project-load-action" role="menuitem">프로젝트 불러오기</button>
+        <button class="menu-action" id="share-action" role="menuitem">공유 링크 복사</button>
+        <div class="menu-sep"></div>
+        <div class="menu-label" id="lang-label">언어</div>
+        <button class="menu-action lang-opt" id="lang-ko" role="menuitem">한국어</button>
+        <button class="menu-action lang-opt" id="lang-en" role="menuitem">English</button>
+        <button class="menu-action lang-opt" id="lang-ja" role="menuitem">日本語</button>
+        <div class="menu-sep"></div>
+        <button class="menu-action" id="reset-action" role="menuitem">초기화</button>
+        <button class="menu-action" id="help-action" role="menuitem">사용법</button>
       </div>
     </div>
-    <button class="icon-btn" id="share-btn" title="공유 링크 생성" aria-label="공유 링크 생성"><span class="mat">share</span></button>
-    <button class="icon-btn" id="fullscreen-btn" title="전체화면" aria-label="전체화면"><span class="mat" id="fullscreen-icon">fullscreen</span></button>
-    <button class="icon-btn" id="theme-btn" title="다크/라이트 모드" aria-label="다크/라이트 모드"><span class="mat" id="theme-icon">dark_mode</span></button>
-    <div class="menu-wrap">
-      <button class="icon-btn" id="lang-btn" title="언어 선택" aria-label="언어 선택" aria-expanded="false" aria-controls="lang-menu"><span class="mat">translate</span></button>
-      <div class="menu-panel" id="lang-menu" role="menu" aria-label="언어 선택">
-        <button class="menu-action" id="lang-ko" role="menuitem">한국어</button>
-        <button class="menu-action" id="lang-en" role="menuitem">English</button>
-        <button class="menu-action" id="lang-ja" role="menuitem">日本語</button>
-      </div>
-    </div>
-    <button class="icon-btn" id="help-btn" title="사용법" aria-label="사용법"><span class="mat">help</span></button>
   </div>
 </div>
 
@@ -567,8 +572,6 @@ body.slideshow #main{ padding:0; }
     </div>
     <button class="nav" id="pb">‹</button>
     <button class="nav" id="nb">›</button>
-    <button class="tap-zone" id="tap-prev" aria-label="이전 페이지로 이동"></button>
-    <button class="tap-zone" id="tap-next" aria-label="다음 페이지로 이동"></button>
     <div id="kbh">← → 키로 이동</div>
     <div id="progbar" style="width:0%"></div>
   </div>
@@ -621,23 +624,23 @@ const uiEl = document.getElementById('ui');
 const progbar = document.getElementById('progbar');
 const emEl = document.getElementById('em');
 const smEl = document.getElementById('sm');
-const singleBtn = document.getElementById('view-single');
-const doubleBtn = document.getElementById('view-double');
+const viewToggleBtn = document.getElementById('view-toggle');
+const viewIcon = document.getElementById('view-icon');
 const firstBtn = document.getElementById('first-btn');
 const lastBtn = document.getElementById('last-btn');
 const pageInput = document.getElementById('page-input');
 const pageGoBtn = document.getElementById('page-go');
-const shareBtn = document.getElementById('share-btn');
-const projectBtn = document.getElementById('project-btn');
-const projectMenu = document.getElementById('project-menu');
+const moreBtn = document.getElementById('more-btn');
+const moreMenu = document.getElementById('more-menu');
+const shareAction = document.getElementById('share-action');
+const resetAction = document.getElementById('reset-action');
+const helpAction = document.getElementById('help-action');
+const langLabel = document.getElementById('lang-label');
 const projectSaveAction = document.getElementById('project-save-action');
 const projectLoadAction = document.getElementById('project-load-action');
-const langBtn = document.getElementById('lang-btn');
-const langMenu = document.getElementById('lang-menu');
 const langKoBtn = document.getElementById('lang-ko');
 const langEnBtn = document.getElementById('lang-en');
 const langJaBtn = document.getElementById('lang-ja');
-const resetBtn = document.getElementById('reset-btn');
 const themeBtn = document.getElementById('theme-btn');
 const themeIcon = document.getElementById('theme-icon');
 const fullscreenBtn = document.getElementById('fullscreen-btn');
@@ -693,9 +696,11 @@ const I18N = {
     shareTitle: '공유 링크 생성',
     fullscreenTitle: '전체화면',
     themeTitle: '다크/라이트 모드',
-    langTitle: '언어 선택',
+    langTitle: '언어',
     helpTitleBtn: '사용법',
     resetTitle: '초기화',
+    moreTitle: '더보기',
+    viewToggleTitle: '한쪽/두쪽 보기 전환',
     helpItems: [
       '<b>파일 열기</b>: 상단 <b>파일 열기</b> 버튼으로 PDF를 불러오거나 드래그 앤 드롭하세요.',
       '<b>URL 열기</b>: Google Drive 공유 링크 또는 PDF 직접 URL을 입력 후 <b>불러오기</b>를 누르세요.',
@@ -733,6 +738,8 @@ const I18N = {
     langTitle: 'Language',
     helpTitleBtn: 'Help',
     resetTitle: 'Reset',
+    moreTitle: 'More',
+    viewToggleTitle: 'Toggle single/double view',
     helpItems: [
       '<b>Open file</b>: Use the top <b>Open file</b> button, or drag & drop a PDF.',
       '<b>Open URL</b>: Enter a Google Drive share link or direct PDF URL and click <b>Load</b>.',
@@ -770,6 +777,8 @@ const I18N = {
     langTitle: '言語',
     helpTitleBtn: '使い方',
     resetTitle: '初期化',
+    moreTitle: 'その他',
+    viewToggleTitle: '単ページ/見開き切替',
     helpItems: [
       '<b>ファイルを開く</b>: 上部の<b>ファイルを開く</b>ボタン、またはドラッグ＆ドロップでPDFを読み込みます。',
       '<b>URLを開く</b>: Google Drive共有リンクまたはPDF URLを入力して<b>読み込み</b>を押します。',
@@ -807,20 +816,24 @@ function applyLanguage(lang) {
   footerLink.textContent = t.footer;
   privacyNote.textContent = t.privacyNote;
   kbh.textContent = t.kbh;
-  projectMenu.setAttribute('aria-label', t.projectMenuAria);
-  langMenu.setAttribute('aria-label', t.langMenuAria);
+  moreMenu.setAttribute('aria-label', t.moreTitle);
   projectSaveAction.textContent = t.projectSave;
   projectLoadAction.textContent = t.projectLoad;
+  shareAction.textContent = t.shareTitle;
+  langLabel.textContent = t.langTitle;
+  resetAction.textContent = t.resetTitle;
+  helpAction.textContent = t.helpTitleBtn;
   helpList.innerHTML = t.helpItems.map(item => `<li>${item}</li>`).join('');
   setButtonTextAndA11y(document.getElementById('file-label'), t.fileOpen);
-  setButtonTextAndA11y(projectBtn, t.projectTitle);
-  setButtonTextAndA11y(shareBtn, t.shareTitle);
+  setButtonTextAndA11y(moreBtn, t.moreTitle);
+  setButtonTextAndA11y(viewToggleBtn, t.viewToggleTitle);
   const fsTxt = document.fullscreenElement ? `${t.fullscreenTitle} 종료` : t.fullscreenTitle;
   setButtonTextAndA11y(fullscreenBtn, fsTxt);
   setButtonTextAndA11y(themeBtn, t.themeTitle);
-  setButtonTextAndA11y(langBtn, t.langTitle);
-  setButtonTextAndA11y(document.getElementById('help-btn'), t.helpTitleBtn);
-  setButtonTextAndA11y(resetBtn, t.resetTitle);
+  // 현재 언어 표시
+  [['ko',langKoBtn],['en',langEnBtn],['ja',langJaBtn]].forEach(([code, el]) => {
+    el.classList.toggle('active', code === safeLang);
+  });
 }
 
 function refreshViewerLayout(delay = 0) {
@@ -920,58 +933,77 @@ async function renderPage(canvas, textLayer, num) {
   }
 }
 
-function playFlip(dir) {
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// 캔버스를 동기적으로 복제 (img.src 비동기 로드로 인한 첫 프레임 깜빡임 방지)
+function cloneCanvasFace(src) {
+  const c = document.createElement('canvas');
+  c.width = src.width;
+  c.height = src.height;
+  if (src.width && src.height) c.getContext('2d').drawImage(src, 0, 0);
+  return c;
+}
+
+// 회전 카드와 정지 오버레이를 정지 상태로 먼저 깔아 새 페이지 렌더를 가린다.
+function buildFlip(dir) {
+  const rect = book.getBoundingClientRect();
+  if (!rect.width || !rect.height) return null;
+
+  const isNext   = dir === 'r';
+  const isSingle = book.classList.contains('single');
+  const pageW    = isSingle ? rect.width : rect.width / 2;
+
+  // 회전하는 페이지 / 반대쪽(정지) 페이지의 현재 캔버스
+  const turnCanvas   = (!isSingle && !isNext) ? lc : rc;
+  const staticCanvas = (!isSingle && !isNext) ? rc : lc;
+
+  // 반대쪽 페이지를 이전 내용으로 덮어 즉시 교체(깜빡임)를 막음
+  let staticEl = null;
+  if (!isSingle && staticCanvas.width) {
+    staticEl = document.createElement('div');
+    staticEl.className = 'flip-static';
+    staticEl.style.cssText = `left:${isNext ? 0 : pageW}px; width:${pageW}px;`;
+    staticEl.appendChild(cloneCanvasFace(staticCanvas));
+    book.appendChild(staticEl);
+  }
+
+  // 원근감 씬
+  const scene = document.createElement('div');
+  scene.className = 'flip-scene';
+  scene.style.cssText = `left:${isNext ? (isSingle ? 0 : pageW) : 0}px; width:${pageW}px;`;
+
+  // 뒤집히는 카드 (아직 .go 미부착 → 정지)
+  const card = document.createElement('div');
+  card.className = `flip-card ${isNext ? 'to-left' : 'to-right'}`;
+
+  const front = document.createElement('div');
+  front.className = 'flip-face front';
+  if (turnCanvas.width) front.appendChild(cloneCanvasFace(turnCanvas));
+
+  const back = document.createElement('div');
+  back.className = 'flip-face back';
+
+  card.append(front, back);
+  scene.appendChild(card);
+  book.appendChild(scene);
+
+  return { scene, staticEl, card };
+}
+
+// 새 페이지가 렌더된 뒤 호출 → 회전 시작, 종료 시 오버레이 제거
+function runFlip(flip) {
   return new Promise(resolve => {
-    const rect = book.getBoundingClientRect();
-    if (!rect.width || !rect.height) return resolve();
-
-    const isNext   = dir === 'r';
-    const isSingle = book.classList.contains('single');
-    const pageW    = isSingle ? rect.width : rect.width / 2;
-
-    // 넘어가는 페이지 캔버스 스냅샷 (현재 콘텐츠 포착)
-    const srcCanvas = (!isSingle && !isNext) ? lc : rc;
-    let snapURL = '';
-    try {
-      if (srcCanvas.width > 0 && srcCanvas.height > 0)
-        snapURL = srcCanvas.toDataURL();
-    } catch (_) {}
-
-    // 원근감 씬 컨테이너
-    const scene = document.createElement('div');
-    scene.className = 'flip-scene';
-    scene.style.cssText =
-      `left:${isNext ? (isSingle ? 0 : pageW) : 0}px; width:${pageW}px;`;
-
-    // 목적지 페이지 위에 드리워지는 그림자 (두쪽보기 전용)
-    if (!isSingle) {
-      const cast = document.createElement('div');
-      cast.className = `flip-cast ${isNext ? 'to-left' : 'to-right'}`;
-      scene.appendChild(cast);
-    }
-
-    // 3D 뒤집히는 카드
-    const card = document.createElement('div');
-    card.className = `flip-card ${isNext ? 'to-left' : 'to-right'}`;
-
-    // 앞면: 현재 페이지 내용
-    const front = document.createElement('div');
-    front.className = 'flip-face front';
-    if (snapURL) {
-      const img = document.createElement('img');
-      img.src = snapURL;
-      front.appendChild(img);
-    }
-
-    // 뒷면: 종이 질감
-    const back = document.createElement('div');
-    back.className = 'flip-face back';
-
-    card.append(front, back);
-    scene.appendChild(card);
-    book.appendChild(scene);
-
-    card.addEventListener('animationend', () => { scene.remove(); resolve(); }, { once: true });
+    if (!flip) return resolve();
+    const done = () => {
+      flip.scene.remove();
+      if (flip.staticEl) flip.staticEl.remove();
+      resolve();
+    };
+    flip.card.addEventListener('animationend', done, { once: true });
+    setTimeout(done, 1000); // 안전장치
+    // 강제 리플로우 후 회전 시작 (정지 프레임이 먼저 그려지도록)
+    void flip.card.offsetWidth;
+    flip.card.classList.add('go');
   });
 }
 
@@ -1013,10 +1045,15 @@ async function renderSpread(idx) {
 
 async function go(idx, dir) {
   if (busy || idx < 0 || idx >= spreads.length) return;
+  if (idx === curSpread) return;
   busy = true;
-  if (dir) await playFlip(dir);
+  // 1) 회전 카드를 정지 상태로 깔아 현재 화면을 가린다
+  const flip = (dir && !reduceMotion) ? buildFlip(dir) : null;
+  // 2) 가려진 상태에서 새 페이지를 렌더 (깜빡임 방지)
   curSpread = idx;
   await renderSpread(idx);
+  // 3) 회전 시작 → 새 페이지가 자연스럽게 드러남
+  if (flip) await runFlip(flip);
   busy = false;
 }
 
@@ -1037,9 +1074,10 @@ document.addEventListener('keydown', e => {
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(curSpread + 1, 'r');
     else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') go(curSpread - 1, 'l');
   }
-  if (e.key === 'Escape') helpModal.classList.remove('on');
-  if (e.key === 'Escape') closeProjectMenu();
-  if (e.key === 'Escape') closeLangMenu();
+  if (e.key === 'Escape') {
+    helpModal.classList.remove('on');
+    closeMoreMenu();
+  }
 });
 
 function applyZoom() { zv.textContent = Math.round(zoomF * 100) + '%'; renderSpread(curSpread); }
@@ -1053,8 +1091,8 @@ function spreadOfPage(pageNumber) {
 }
 
 function applyViewModeUI(mode) {
-  singleBtn.classList.toggle('on', mode === 'single');
-  doubleBtn.classList.toggle('on', mode === 'double');
+  // 토글 버튼은 현재 모드 아이콘을 표시
+  viewIcon.textContent = mode === 'single' ? 'article' : 'auto_stories';
 }
 
 function jumpToPage() {
@@ -1087,8 +1125,9 @@ async function setViewMode(mode) {
   await recalcBaseScale();
   await renderSpread(curSpread);
 }
-singleBtn.addEventListener('click', () => { setViewMode('single'); });
-doubleBtn.addEventListener('click', () => { setViewMode('double'); });
+viewToggleBtn.addEventListener('click', () => {
+  setViewMode(viewMode === 'double' ? 'single' : 'double');
+});
 
 function applyTheme(theme) {
   const isLight = theme === 'light';
@@ -1229,26 +1268,14 @@ function saveEbookProject() {
   showSuccess('프로젝트(.ebook) 파일로 저장했습니다.');
 }
 
-function openProjectMenu() {
-  projectMenu.classList.add('on');
-  projectBtn.setAttribute('aria-expanded', 'true');
-  closeLangMenu();
+function openMoreMenu() {
+  moreMenu.classList.add('on');
+  moreBtn.setAttribute('aria-expanded', 'true');
 }
 
-function closeProjectMenu() {
-  projectMenu.classList.remove('on');
-  projectBtn.setAttribute('aria-expanded', 'false');
-}
-
-function openLangMenu() {
-  langMenu.classList.add('on');
-  langBtn.setAttribute('aria-expanded', 'true');
-  closeProjectMenu();
-}
-
-function closeLangMenu() {
-  langMenu.classList.remove('on');
-  langBtn.setAttribute('aria-expanded', 'false');
+function closeMoreMenu() {
+  moreMenu.classList.remove('on');
+  moreBtn.setAttribute('aria-expanded', 'false');
 }
 
 async function loadEbookProjectFile(file) {
@@ -1276,40 +1303,33 @@ async function loadEbookProjectFile(file) {
   }
 }
 
-projectBtn.addEventListener('click', (e) => {
+moreBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  if (projectMenu.classList.contains('on')) closeProjectMenu();
-  else openProjectMenu();
+  if (moreMenu.classList.contains('on')) closeMoreMenu();
+  else openMoreMenu();
 });
 projectSaveAction.addEventListener('click', () => {
-  closeProjectMenu();
+  closeMoreMenu();
   saveEbookProject();
 });
 projectLoadAction.addEventListener('click', () => {
-  closeProjectMenu();
+  closeMoreMenu();
   ebookFi.click();
 });
-langBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  if (langMenu.classList.contains('on')) closeLangMenu();
-  else openLangMenu();
-});
-langKoBtn.addEventListener('click', () => { closeLangMenu(); applyLanguage('ko'); });
-langEnBtn.addEventListener('click', () => { closeLangMenu(); applyLanguage('en'); });
-langJaBtn.addEventListener('click', () => { closeLangMenu(); applyLanguage('ja'); });
+shareAction.addEventListener('click', () => { closeMoreMenu(); shareCurrentLink(); });
+resetAction.addEventListener('click', () => { closeMoreMenu(); resetViewer(); });
+helpAction.addEventListener('click', () => { closeMoreMenu(); helpModal.classList.add('on'); });
+langKoBtn.addEventListener('click', () => { closeMoreMenu(); applyLanguage('ko'); });
+langEnBtn.addEventListener('click', () => { closeMoreMenu(); applyLanguage('en'); });
+langJaBtn.addEventListener('click', () => { closeMoreMenu(); applyLanguage('ja'); });
 ebookFi.addEventListener('change', (e) => {
   const file = e.target.files[0];
   loadEbookProjectFile(file);
 });
 document.addEventListener('click', (e) => {
-  if (projectMenu.classList.contains('on')) {
-    if (!(e.target === projectBtn || projectBtn.contains(e.target) || e.target === projectMenu || projectMenu.contains(e.target))) {
-      closeProjectMenu();
-    }
-  }
-  if (langMenu.classList.contains('on')) {
-    if (!(e.target === langBtn || langBtn.contains(e.target) || e.target === langMenu || langMenu.contains(e.target))) {
-      closeLangMenu();
+  if (moreMenu.classList.contains('on')) {
+    if (!(e.target === moreBtn || moreBtn.contains(e.target) || e.target === moreMenu || moreMenu.contains(e.target))) {
+      closeMoreMenu();
     }
   }
 });
@@ -1349,14 +1369,23 @@ function toDirectURL(raw) {
   const url = raw.trim();
   const driveId = extractDriveId(url);
   if (driveId) {
+    // drive.usercontent.google.com + confirm=t: 구식 uc?export=download 의
+    // 바이러스 검사 안내 HTML 페이지를 건너뛰고 PDF 본문을 바로 받는다.
     return {
-      url: `https://drive.google.com/uc?export=download&id=${driveId}`,
+      url: `https://drive.usercontent.google.com/download?id=${driveId}&export=download&confirm=t`,
       isGdrive: true,
       driveId,
       shareableRaw: `https://drive.google.com/file/d/${driveId}/view`
     };
   }
   return { url, isGdrive: false, driveId:'', shareableRaw: url };
+}
+
+// 응답 앞부분이 PDF(%PDF-)인지 검증. HTML(드라이브 안내 페이지 등)이면 false.
+function looksLikePDF(arrayBuffer) {
+  const head = new Uint8Array(arrayBuffer.slice(0, 5));
+  // %PDF-
+  return head[0] === 0x25 && head[1] === 0x50 && head[2] === 0x44 && head[3] === 0x46 && head[4] === 0x2D;
 }
 
 async function fetchAsArrayBuffer(url, isGdrive) {
@@ -1367,11 +1396,12 @@ async function fetchAsArrayBuffer(url, isGdrive) {
     cache: 'no-store'
   });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  const contentType = response.headers.get('content-type') || '';
-  if (!contentType.includes('pdf') && !isGdrive) {
-    showErr('주의: PDF 응답이 아닐 수 있습니다. 계속 시도합니다.');
+  const ab = await response.arrayBuffer();
+  // PDF가 아니면(HTML 안내 페이지 등) 명확히 실패 처리 → 드라이브는 임베드 폴백
+  if (!looksLikePDF(ab)) {
+    throw new Error('NOT_PDF');
   }
-  return response.arrayBuffer();
+  return ab;
 }
 
 function openDriveEmbedById(driveId, rawUrlForShare) {
@@ -1416,6 +1446,8 @@ async function loadFromURL() {
         '② PDF 원본 링크인지 확인\n' +
         '③ 계속 실패하면 로컬 파일 업로드를 사용'
       );
+    } else if (msg === 'NOT_PDF') {
+      showErr('응답이 PDF가 아닙니다. PDF 원본 링크인지, 로그인 없이 접근 가능한지 확인해주세요.');
     } else {
       showErr('URL 로드 실패: ' + (e.message || '서버 CORS 설정을 확인하세요.'));
     }
@@ -1435,7 +1467,7 @@ function currentShareLink() {
   return share.toString();
 }
 
-shareBtn.addEventListener('click', async () => {
+async function shareCurrentLink() {
   const link = currentShareLink();
   if (!link) {
     showErr('공유 링크는 URL로 불러온 PDF에서만 생성됩니다.');
@@ -1447,7 +1479,7 @@ shareBtn.addEventListener('click', async () => {
   } catch {
     showErr('클립보드 복사 실패. 링크를 수동으로 복사해주세요:\n' + link);
   }
-});
+}
 
 function resetViewer() {
   pdfDoc = null;
@@ -1470,8 +1502,6 @@ function resetViewer() {
   showSuccess('열려 있던 PDF를 초기화했습니다.');
 }
 
-resetBtn.addEventListener('click', resetViewer);
-
 const savedTheme = localStorage.getItem('easybook-theme');
 applyTheme(savedTheme === 'dark' ? 'dark' : 'light');
 applyLanguage(localStorage.getItem('easybook-lang') || 'ko');
@@ -1490,7 +1520,6 @@ if (initialPDF) {
   });
 }
 
-document.getElementById('help-btn').addEventListener('click', () => helpModal.classList.add('on'));
 document.getElementById('help-close').addEventListener('click', () => helpModal.classList.remove('on'));
 helpModal.addEventListener('click', (e) => { if (e.target === helpModal) helpModal.classList.remove('on'); });
 window.addEventListener('resize', () => {
