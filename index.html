@@ -214,8 +214,13 @@ body.drag-over #main::after{
   position:relative; display:flex;
   align-items:stretch; transform-style:preserve-3d; margin:auto;
 }
-#book.single{ box-shadow:4px 4px 0 rgba(0,0,0,.12), 8px 8px 0 rgba(0,0,0,.08), 0 24px 64px var(--shadow); }
-#book.spread{ box-shadow:-6px 6px 0 rgba(0,0,0,.12), -12px 12px 0 rgba(0,0,0,.08), 0 24px 64px var(--shadow); }
+#book.single{ box-shadow:2px 2px 0 rgba(0,0,0,.13),4px 4px 0 rgba(0,0,0,.09),6px 6px 0 rgba(0,0,0,.06),0 20px 60px var(--shadow); }
+#book.spread{ box-shadow:-2px 2px 0 rgba(0,0,0,.13),-4px 4px 0 rgba(0,0,0,.09),-6px 6px 0 rgba(0,0,0,.06),0 20px 60px var(--shadow); }
+#book.spread::after{
+  content:''; position:absolute; top:0; bottom:0; left:50%;
+  transform:translateX(-50%); width:14px; pointer-events:none; z-index:5;
+  background:linear-gradient(to right,rgba(0,0,0,.13),rgba(0,0,0,.03) 35%,transparent 50%,rgba(0,0,0,.03) 65%,rgba(0,0,0,.11));
+}
 .slot{ position:relative; overflow:hidden; background:var(--paper); }
 .pg-layer{ position:relative; }
 .slot canvas{ display:block; }
@@ -229,14 +234,14 @@ body.drag-over #main::after{
   transform-origin:0% 0%; color:transparent;
 }
 .slot::before{
-  content:''; position:absolute; inset:0; pointer-events:none;
-  background:linear-gradient(to right, rgba(0,0,0,.08), transparent 12%, transparent 88%, rgba(0,0,0,.06));
-  mix-blend-mode:multiply; opacity:.3;
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:2;
+  background:linear-gradient(to right, rgba(0,0,0,.11), transparent 14%, transparent 86%, rgba(0,0,0,.09));
+  mix-blend-mode:multiply; opacity:.55;
 }
 .slot::after{
-  content:''; position:absolute; inset:0;
-  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
-  pointer-events:none; opacity:.5; mix-blend-mode:multiply;
+  content:''; position:absolute; inset:0; z-index:1;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.045'/%3E%3C/svg%3E");
+  pointer-events:none; opacity:.6; mix-blend-mode:overlay;
 }
 .pn{ position:absolute; bottom:10px; font-size:10px; color:rgba(80,60,40,.4); pointer-events:none; user-select:none; }
 .pn.l{ left:14px; } .pn.r{ right:14px; }
@@ -277,27 +282,69 @@ body.drag-over #main::after{
 #book-tap-prev{ left:0; }
 #book-tap-next{ right:0; }
 
-/* === 페이지 넘김 애니메이션 === */
-.flip-sheet{
+/* === 페이지 넘김 애니메이션 (종이 질감 3D) === */
+.flip-scene{
   position:absolute; top:0; height:100%;
-  background:linear-gradient(to right,#ffffff,#f8f8f8 52%,#eeeeee 100%);
-  box-shadow:0 8px 24px rgba(0,0,0,.28); z-index:30; pointer-events:none;
-  backface-visibility:hidden; transform-style:preserve-3d;
+  pointer-events:none; z-index:30;
+  perspective:1000px;
 }
-.flip-sheet::after{
-  content:''; position:absolute; inset:0;
-  background:linear-gradient(to right, rgba(0,0,0,.04), transparent 20%, transparent 78%, rgba(0,0,0,.17));
+.flip-card{
+  position:absolute; inset:0;
+  transform-style:preserve-3d;
 }
-.flip-sheet.next{ animation:paper-next .42s linear forwards; }
-.flip-sheet.prev{ animation:paper-prev .42s linear forwards; }
-@keyframes paper-next{
-  from{ transform:rotateY(0deg); opacity:.95; }
-  to{ transform:rotateY(-170deg); opacity:.08; }
+.flip-card.to-left{
+  transform-origin:left center;
+  animation:f-left .62s cubic-bezier(.4,0,.2,1) forwards;
 }
-@keyframes paper-prev{
-  from{ transform:rotateY(0deg); opacity:.95; }
-  to{ transform:rotateY(170deg); opacity:.08; }
+.flip-card.to-right{
+  transform-origin:right center;
+  animation:f-right .62s cubic-bezier(.4,0,.2,1) forwards;
 }
+.flip-face{
+  position:absolute; inset:0;
+  backface-visibility:hidden; overflow:hidden;
+  background:#fafaf8;
+}
+.flip-face img{
+  position:absolute; inset:0; width:100%; height:100%;
+  display:block; object-fit:fill; pointer-events:none;
+}
+/* 앞면 접힘 그림자 (fold crease) — spine 쪽(회전축)에 집중 */
+.flip-card.to-left .flip-face.front::after{
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(to right,rgba(0,0,0,.22) 0%,rgba(0,0,0,.06) 18%,transparent 38%);
+}
+.flip-card.to-right .flip-face.front::after{
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(to left,rgba(0,0,0,.22) 0%,rgba(0,0,0,.06) 18%,transparent 38%);
+}
+/* 뒷면: 종이 질감 */
+.flip-face.back{
+  transform:rotateY(180deg);
+  background:linear-gradient(160deg,#f7f4ee 0%,#ede9e2 55%,#f4f0e8 100%);
+}
+.flip-face.back::after{
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.06'/%3E%3C/svg%3E");
+  opacity:.7; mix-blend-mode:multiply;
+}
+/* 목적지 페이지에 드리워지는 그림자 */
+.flip-cast{
+  position:absolute; top:0; height:100%;
+  pointer-events:none;
+  animation:f-cast .62s ease-in-out forwards;
+}
+.flip-cast.to-left{
+  right:100%; width:65%;
+  background:linear-gradient(to left,rgba(0,0,0,.26),transparent);
+}
+.flip-cast.to-right{
+  left:100%; width:65%;
+  background:linear-gradient(to right,rgba(0,0,0,.26),transparent);
+}
+@keyframes f-left  { from{transform:rotateY(0)} to{transform:rotateY(-180deg)} }
+@keyframes f-right { from{transform:rotateY(0)} to{transform:rotateY( 180deg)} }
+@keyframes f-cast  { 0%{opacity:0} 30%{opacity:1} 100%{opacity:0} }
 
 /* === 임베드 뷰어 === */
 #embed-wrap{
@@ -878,26 +925,53 @@ function playFlip(dir) {
     const rect = book.getBoundingClientRect();
     if (!rect.width || !rect.height) return resolve();
 
-    const singleLike = book.classList.contains('single');
-    const pageWidth = singleLike ? rect.width : rect.width / 2;
-    const sheet = document.createElement('div');
-    sheet.className = `flip-sheet ${dir === 'r' ? 'next' : 'prev'}`;
-    sheet.style.width = `${pageWidth}px`;
-    sheet.style.height = `${rect.height}px`;
+    const isNext   = dir === 'r';
+    const isSingle = book.classList.contains('single');
+    const pageW    = isSingle ? rect.width : rect.width / 2;
 
-    if (dir === 'r') {
-      sheet.style.left = singleLike ? '0px' : `${pageWidth}px`;
-      sheet.style.transformOrigin = 'left center';
-    } else {
-      sheet.style.left = '0px';
-      sheet.style.transformOrigin = 'right center';
+    // 넘어가는 페이지 캔버스 스냅샷 (현재 콘텐츠 포착)
+    const srcCanvas = (!isSingle && !isNext) ? lc : rc;
+    let snapURL = '';
+    try {
+      if (srcCanvas.width > 0 && srcCanvas.height > 0)
+        snapURL = srcCanvas.toDataURL();
+    } catch (_) {}
+
+    // 원근감 씬 컨테이너
+    const scene = document.createElement('div');
+    scene.className = 'flip-scene';
+    scene.style.cssText =
+      `left:${isNext ? (isSingle ? 0 : pageW) : 0}px; width:${pageW}px;`;
+
+    // 목적지 페이지 위에 드리워지는 그림자 (두쪽보기 전용)
+    if (!isSingle) {
+      const cast = document.createElement('div');
+      cast.className = `flip-cast ${isNext ? 'to-left' : 'to-right'}`;
+      scene.appendChild(cast);
     }
 
-    book.appendChild(sheet);
-    sheet.addEventListener('animationend', () => {
-      sheet.remove();
-      resolve();
-    }, { once:true });
+    // 3D 뒤집히는 카드
+    const card = document.createElement('div');
+    card.className = `flip-card ${isNext ? 'to-left' : 'to-right'}`;
+
+    // 앞면: 현재 페이지 내용
+    const front = document.createElement('div');
+    front.className = 'flip-face front';
+    if (snapURL) {
+      const img = document.createElement('img');
+      img.src = snapURL;
+      front.appendChild(img);
+    }
+
+    // 뒷면: 종이 질감
+    const back = document.createElement('div');
+    back.className = 'flip-face back';
+
+    card.append(front, back);
+    scene.appendChild(card);
+    book.appendChild(scene);
+
+    card.addEventListener('animationend', () => { scene.remove(); resolve(); }, { once: true });
   });
 }
 
