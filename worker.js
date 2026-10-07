@@ -14,6 +14,8 @@ export default {
       "Access-Control-Allow-Methods": "GET, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type",
       "Access-Control-Max-Age": "86400",
+      // 다운로드 진행률(%) 표시용
+      "Access-Control-Expose-Headers": "Content-Length",
       "Vary": "Origin"
     };
 
