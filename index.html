@@ -323,6 +323,17 @@ body.reading #vwr{ display:flex; }
   position:absolute; bottom:8px; z-index:5;
   font-size:10px; color:rgba(80,60,40,.45); pointer-events:none;
 }
+/* 글자 선택 레이어 (PDF.js text layer) — 투명한 글자를 실제 글자 위치에 겹쳐 둔다 */
+.pf-text{
+  position:absolute; z-index:6; overflow:hidden; line-height:1;
+  user-select:text; -webkit-user-select:text;
+}
+.pf-text span, .pf-text br{
+  position:absolute; white-space:pre; color:transparent;
+  transform-origin:0% 0%; cursor:text;
+}
+.pf-text span::selection{ background:rgba(37,110,244,.32); color:transparent; }
+.pf-text br::selection{ background:transparent; }
 .pf-page.--left .pf-num{ left:12px; }
 .pf-page.--right .pf-num{ right:12px; }
 /* 단면 보기에서는 오른쪽 페이지 모양이지만 번호는 오른쪽 아래 */
@@ -772,6 +783,7 @@ const I18N = {
       '<b>책장 넘기기</b>: 페이지 <b>모서리를 잡아 끌면</b> 종이가 휘어지며 넘어갑니다. 마우스를 모서리에 올리면 살짝 들춰집니다. 클릭·스와이프·<kbd>←</kbd> <kbd>→</kbd> <kbd>Space</kbd> 키도 사용할 수 있습니다.',
       '<b>빠른 이동</b>: 하단 슬라이더나 상단 쪽 번호 입력으로 원하는 쪽까지 한 번에 넘깁니다. <kbd>Home</kbd> <kbd>End</kbd>로 처음·끝.',
       '<b>보기 모드</b>: <b>한쪽</b>/<b>두쪽</b> 보기를 전환할 수 있고, 표지·뒷표지는 하드커버처럼 단면으로 표시됩니다.',
+      '<b>글자 선택</b>: 글자 위를 끌면 선택되고 <kbd>Ctrl</kbd>+<kbd>C</kbd>로 복사할 수 있습니다. 모바일은 글자를 길게 누르세요. (모서리·여백을 끌면 페이지가 넘어갑니다)',
       '<b>확대/축소</b>: 상단 버튼, <kbd>Ctrl</kbd>+휠, 두 손가락 핀치. 확대 중에는 끌어서 화면을 이동하고, 배율(%)을 누르면 화면 맞춤으로 돌아갑니다.',
       '<b>넘김 소리</b>: 더보기(⋮) 메뉴에서 종이 넘기는 소리를 켜고 끌 수 있습니다.',
       '<b>이어 읽기</b>: 같은 PDF를 다시 열면 마지막으로 읽던 쪽부터 열립니다.',
@@ -862,6 +874,7 @@ const I18N = {
       '<b>Turning pages</b>: <b>Grab a page corner and drag</b> — the paper curls as it turns. Hovering a corner lifts it slightly. Click, swipe or <kbd>←</kbd> <kbd>→</kbd> <kbd>Space</kbd> also work.',
       '<b>Jump</b>: Use the slider at the bottom or the page box at the top. <kbd>Home</kbd> <kbd>End</kbd> go to the first/last page.',
       '<b>View mode</b>: Switch <b>Single</b>/<b>Double</b> view. Covers are shown alone like a hardcover.',
+      '<b>Select text</b>: Drag over text to select it and copy with <kbd>Ctrl</kbd>+<kbd>C</kbd>. On mobile, long-press the text. (Drag a corner or margin to turn the page.)',
       '<b>Zoom</b>: Toolbar buttons, <kbd>Ctrl</kbd>+wheel or pinch. Drag to pan while zoomed; click the % to fit again.',
       '<b>Page-turn sound</b>: Toggle it from the More (⋮) menu.',
       '<b>Resume</b>: Reopening the same PDF continues from the last page you read.',
@@ -952,6 +965,7 @@ const I18N = {
       '<b>ページをめくる</b>: ページの<b>角をつまんでドラッグ</b>すると紙がしなってめくれます。角にマウスを乗せると少し持ち上がります。クリック・スワイプ・<kbd>←</kbd> <kbd>→</kbd> <kbd>Space</kbd>も使えます。',
       '<b>すばやく移動</b>: 下部のスライダーや上部のページ入力で一気にめくれます。<kbd>Home</kbd> <kbd>End</kbd>で最初・最後へ。',
       '<b>表示モード</b>: <b>単ページ</b>/<b>見開き</b>を切り替えできます。表紙と裏表紙はハードカバーのように単独で表示されます。',
+      '<b>文字選択</b>: 文字の上をドラッグすると選択でき、<kbd>Ctrl</kbd>+<kbd>C</kbd>でコピーできます。モバイルは文字を長押しします。(角や余白をドラッグするとページがめくれます)',
       '<b>拡大/縮小</b>: ボタン、<kbd>Ctrl</kbd>+ホイール、ピンチ操作。拡大中はドラッグで移動、%を押すと画面に合わせます。',
       '<b>めくる音</b>: その他(⋮)メニューでオン/オフできます。',
       '<b>続きから</b>: 同じPDFを開き直すと、前回のページから表示します。',
@@ -1263,8 +1277,16 @@ function centerViewer() {
   });
 }
 
+function bookSelection() {
+  const sel = window.getSelection && window.getSelection();
+  if (!sel || sel.isCollapsed || !sel.anchorNode || !bookHost) return null;
+  return bookHost.contains(sel.anchorNode) ? sel : null;
+}
+
 function onIndexChange(idx) {
   curIdx = idx;
+  const sel = bookSelection();
+  if (sel) sel.removeAllRanges(); // 넘어간 쪽의 선택은 지운다
   updateChrome();
   scheduleRenders();
   savePosition();
@@ -1331,6 +1353,8 @@ const renderWaiters = new Set();
 function releasePage(el) {
   const c = el.querySelector('canvas.pf-canvas');
   if (c) { c.width = 0; c.height = 0; c.remove(); }
+  const tl = el.querySelector('.pf-text');
+  if (tl) tl.remove();
   el._done = false;
   el.classList.remove('ready');
 }
@@ -1385,6 +1409,25 @@ function waitForPages(indices, timeout) {
   });
 }
 
+async function renderTextLayer(el, canvas, page, scale, gen) {
+  try {
+    const textContent = await page.getTextContent();
+    if (gen !== bookGen || !textContent.items.length) return;
+    const layer = document.createElement('div');
+    layer.className = 'pf-text';
+    layer.style.cssText = `left:${canvas.style.left};top:${canvas.style.top};width:${canvas.style.width};height:${canvas.style.height};`;
+    await pdfjsLib.renderTextLayer({
+      textContent,
+      container: layer,
+      viewport: page.getViewport({ scale }),
+      textDivs: []
+    }).promise;
+    // 그사이 페이지가 해제·교체됐으면 버린다
+    if (gen !== bookGen || !el._done || canvas.parentNode !== el) return;
+    el.appendChild(layer);
+  } catch {}
+}
+
 async function renderPageEl(i, gen) {
   const el = pageEls[i];
   const p = pageMap[i];
@@ -1417,6 +1460,7 @@ async function renderPageEl(i, gen) {
     el.insertBefore(canvas, el.querySelector('.pf-grain'));
     el._done = true;
     el.classList.add('ready');
+    await renderTextLayer(el, canvas, page, s, gen);
   } catch (e) {
     if (gen === bookGen) { el._done = true; console.error(e); }
   }
@@ -1627,8 +1671,28 @@ vwr.addEventListener('wheel', e => {
 /* ================= 확대 상태에서 끌어서 이동 · 핀치 ================= */
 // 캡처 단계에서 가로채 StPageFlip 이 페이지를 넘기지 않게 한다.
 let drag = null;
+let selectingText = false;
+
+// 글자 위를 눌렀는지 — 단, 페이지 바깥 모서리 근처는 넘기기를 우선한다
+function isTextPress(e) {
+  const span = e.target && e.target.closest && e.target.closest('.pf-text span');
+  if (!span || !pf || pf.getState() !== 'read') return false;
+  const page = span.closest('.pf-page');
+  const r = page.getBoundingClientRect();
+  const zone = Math.hypot(r.width, r.height) / 7;
+  const outerX = page.classList.contains('--left') ? r.left : r.right;
+  return ![r.top, r.bottom].some(y => Math.hypot(e.clientX - outerX, e.clientY - y) < zone);
+}
+
 vwr.addEventListener('mousedown', e => {
-  if (!vwr.classList.contains('pan') || e.button !== 0) return;
+  if (e.button !== 0 || !canFlip()) return;
+  if (isTextPress(e)) {
+    // 기본 동작(글자 선택)은 살리고 라이브러리의 넘기기만 막는다
+    e.stopPropagation();
+    selectingText = true;
+    return;
+  }
+  if (!vwr.classList.contains('pan')) return;
   e.stopPropagation();
   e.preventDefault();
   drag = { x: e.clientX, y: e.clientY, l: vwr.scrollLeft, t: vwr.scrollTop };
@@ -1638,12 +1702,14 @@ vwr.addEventListener('mousemove', e => {
   if (vwr.classList.contains('pan')) e.stopPropagation();
 }, true);
 window.addEventListener('mousemove', e => {
+  if (selectingText) { e.stopPropagation(); return; } // 선택 중 모서리 들춤 방지
   if (!drag) return;
   e.stopPropagation();
   vwr.scrollLeft = drag.l - (e.clientX - drag.x);
   vwr.scrollTop = drag.t - (e.clientY - drag.y);
 }, true);
 window.addEventListener('mouseup', () => {
+  selectingText = false;
   if (!drag) return;
   drag = null;
   vwr.classList.remove('dragging');
@@ -1679,7 +1745,7 @@ vwr.addEventListener('touchmove', e => {
     if (e.touches.length >= 2) previewZoomTo(pinch.z0 * touchDist(e) / pinch.d0);
     return;
   }
-  if (vwr.classList.contains('pan')) e.stopPropagation();
+  if (vwr.classList.contains('pan') || bookSelection()) e.stopPropagation();
 }, { capture: true, passive: true });
 function endTouch(e) {
   if (pinch) {
@@ -1690,6 +1756,8 @@ function endTouch(e) {
     }
     return;
   }
+  // 길게 눌러 글자를 선택했으면 손을 뗄 때 페이지를 넘기지 않는다
+  if (bookSelection()) { e.stopPropagation(); cancelLibraryGesture(); return; }
   if (vwr.classList.contains('pan')) e.stopPropagation();
 }
 vwr.addEventListener('touchend', endTouch, { capture: true, passive: true });
