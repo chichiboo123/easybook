@@ -2,7 +2,8 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#F4F5F6">
 <title>Easy book</title>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-gov.min.css" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,0,0" />
@@ -11,29 +12,42 @@
 /* === KRDS 공식 디자인 토큰 (krds.go.kr 기준) === */
 :root{
   /* 다크 모드 — KRDS gray-90/95 + primary-40 */
-  --bg:#131416; --surface:#1E2124; --paper:#FAFAF8;
+  --bg:#131416; --surface:#1E2124; --paper:#FFFFFF;
   --accent:#4C87F6; --accent2:#256EF4;
   --ui:#F4F5F6; --muted:#8A949E; --good:#52C774;
   --border:#33363D; --shadow:rgba(0,0,0,.4);
+  --accent-soft:rgba(76,135,246,.14);
+  /* 책상(뷰어 배경)과 책 그림자 */
+  --desk-hi:#24272c; --desk-lo:#131416;
+  --book-shadow:rgba(0,0,0,.55);
+  /* 종이 단면(책 두께) */
+  --edge-a:#efe9dc; --edge-b:#cfc6b4;
 }
 body.light{
   /* 라이트 모드 (KRDS 기본 권장) — gray-0/5 + primary-50 */
   --bg:#F4F5F6; --surface:#FFFFFF; --paper:#FFFFFF;
   --accent:#256EF4; --accent2:#0B50D0;
   --ui:#1E2124; --muted:#6D7882; --good:#2E9E52;
-  --border:#E6E8EA; --shadow:rgba(0,0,0,.06);
+  --border:#E6E8EA; --shadow:rgba(0,0,0,.08);
+  --accent-soft:rgba(37,110,244,.09);
+  --desk-hi:#FBFBFC; --desk-lo:#E4E6E9;
+  --book-shadow:rgba(30,33,36,.28);
+  --edge-a:#f6f2ea; --edge-b:#d8d0c0;
 }
 
 /* === 기본 리셋 === */
 *{ margin:0; padding:0; box-sizing:border-box; }
+html,body{ height:100%; }
 body{
-  font-family:'Pretendard GOV',sans-serif;
+  font-family:'Pretendard GOV','Pretendard',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   background:var(--bg); color:var(--ui);
-  height:100vh; overflow:hidden;
+  height:100vh; height:100dvh; overflow:hidden;
   display:flex; flex-direction:column;
   -webkit-font-smoothing:antialiased;
   font-size:14px; line-height:1.5;
 }
+button, input{ font-family:inherit; }
+:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
 
 /* === 상단 툴바 === */
 #tb{
@@ -43,59 +57,77 @@ body{
   border-bottom:1px solid var(--border);
   flex-shrink:0;
   box-shadow:0 1px 3px var(--shadow);
+  position:relative; z-index:1000;
 }
 #tb h1{
+  display:inline-flex; align-items:center; gap:6px;
   font-size:15px; color:var(--accent);
   margin-right:8px; white-space:nowrap;
   letter-spacing:.02em; font-weight:700;
 }
+#tb h1 .mat{ font-size:20px; }
 .tb-group{ display:flex; align-items:center; gap:4px; }
-.menu-wrap{ position:relative; display:inline-flex; }
-.menu-panel{
-  position:fixed;
-  min-width:160px; padding:6px;
-  border:1px solid var(--border); border-radius:10px;
-  background:var(--surface);
-  box-shadow:0 8px 24px var(--shadow);
-  z-index:9999; display:none;
-}
-.menu-panel.on{ display:block; }
-.menu-action{
-  width:100%; border:none; background:transparent;
-  color:var(--ui); font-size:13px;
-  text-align:left; padding:8px 10px;
-  border-radius:8px; cursor:pointer;
-  font-family:'Pretendard GOV',sans-serif;
-}
-.menu-action:hover{ background:rgba(96,165,250,.12); color:var(--accent); }
-body.light .menu-action:hover{ background:rgba(29,78,216,.08); }
-.menu-action.active{ color:var(--accent); font-weight:700; }
-.menu-sep{ height:1px; background:var(--border); margin:6px 4px; }
-.menu-label{
-  font-size:10px; font-weight:700; color:var(--muted);
-  letter-spacing:.06em; text-transform:uppercase;
-  padding:6px 10px 2px;
-}
 .tb-spacer{ flex:1; }
+body:not(.reading) .reading-only{ display:none !important; }
 .mat{
   font-family:'Material Symbols Rounded'; font-weight:500;
   font-style:normal; font-size:18px; line-height:1;
   display:inline-flex; align-items:center; justify-content:center;
+  letter-spacing:normal; text-transform:none; white-space:nowrap;
+  -webkit-font-feature-settings:'liga'; font-feature-settings:'liga';
+  user-select:none;
 }
+
+/* 더보기 메뉴 */
+.menu-wrap{ position:relative; display:inline-flex; }
+.menu-panel{
+  position:fixed;
+  min-width:200px; padding:6px;
+  border:1px solid var(--border); border-radius:12px;
+  background:var(--surface);
+  box-shadow:0 12px 32px var(--shadow);
+  z-index:9999; display:none;
+  max-height:calc(100dvh - 80px); overflow:auto;
+}
+.menu-panel.on{ display:block; animation:menuIn .14s ease-out; }
+@keyframes menuIn{ from{ opacity:0; transform:translateY(-4px); } to{ opacity:1; transform:none; } }
+.menu-action{
+  width:100%; border:none; background:transparent;
+  color:var(--ui); font-size:13px;
+  display:flex; align-items:center; gap:10px;
+  text-align:left; padding:8px 10px;
+  border-radius:8px; cursor:pointer;
+}
+.menu-action .mat{ font-size:18px; color:var(--muted); width:20px; }
+.menu-action:hover{ background:var(--accent-soft); color:var(--accent); }
+.menu-action:hover .mat{ color:var(--accent); }
+.menu-action.active{ color:var(--accent); font-weight:700; }
+.menu-action.active .mat{ color:var(--accent); }
+.menu-action .tail{ margin-left:auto; font-size:11px; color:var(--muted); font-weight:600; }
+.menu-action.toggle-on .tail{ color:var(--accent); }
+.menu-sep{ height:1px; background:var(--border); margin:6px 4px; }
+.menu-label{
+  font-size:11px; font-weight:700; color:var(--muted);
+  letter-spacing:.06em; text-transform:uppercase;
+  padding:6px 10px 2px;
+}
+.lang-row{ display:flex; gap:4px; padding:4px 6px 2px; }
+.lang-row .menu-action{ justify-content:center; padding:6px 4px; border:1px solid var(--border); }
+.lang-row .menu-action.active{ border-color:var(--accent); background:var(--accent-soft); }
+
+/* 페이지 이동 입력 */
 .page-jump{ display:inline-flex; align-items:center; gap:4px; margin-left:2px; }
 .page-jump input{
-  width:78px; height:32px; padding:0 8px; border-radius:6px;
+  width:58px; height:32px; padding:0 8px; border-radius:6px;
   border:1px solid var(--border);
-  background:var(--bg); color:var(--ui);
+  background:var(--bg); color:var(--ui); text-align:center;
   font-size:13px; outline:none; transition:border-color .15s;
 }
 .page-jump input:focus{ border-color:var(--accent); }
 .page-jump input::-webkit-outer-spin-button,
-.page-jump input::-webkit-inner-spin-button{
-  -webkit-appearance:none;
-  margin:0;
-}
+.page-jump input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
 .page-jump input[type=number]{ -moz-appearance:textfield; }
+#page-total{ font-size:12px; color:var(--muted); white-space:nowrap; min-width:28px; }
 
 /* === 아이콘 버튼 & 파일 레이블 === */
 .icon-btn, #file-label{
@@ -103,35 +135,29 @@ body.light .menu-action:hover{ background:rgba(29,78,216,.08); }
   width:34px; height:32px; border-radius:6px;
   border:1px solid var(--border);
   background:transparent; color:var(--muted);
-  cursor:pointer; transition:all .15s;
+  cursor:pointer; transition:all .15s; flex-shrink:0;
 }
-.icon-btn:hover{
-  border-color:var(--accent); color:var(--accent);
-  background:rgba(96,165,250,.1);
-}
-body.light .icon-btn:hover{ background:rgba(29,78,216,.07); }
+.icon-btn:hover{ border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
+.icon-btn:disabled{ opacity:.35; cursor:default; pointer-events:none; }
 #file-label{ background:var(--accent); color:#fff; border-color:var(--accent); }
 #file-label:hover{ background:var(--accent2); border-color:var(--accent2); }
-#fi{ position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+#fi, #ebook-fi{ position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+#zv{
+  font-size:12px; min-width:46px; height:32px; padding:0 4px;
+  border:none; background:transparent; color:var(--muted);
+  border-radius:6px; cursor:pointer; font-variant-numeric:tabular-nums;
+}
+#zv:hover{ color:var(--accent); background:var(--accent-soft); }
 
 /* === 일반 버튼 === */
 .btn{
   background:transparent; border:1px solid var(--border);
-  color:var(--ui); padding:5px 14px; border-radius:6px;
+  color:var(--ui); padding:7px 16px; border-radius:8px;
   cursor:pointer; font-size:13px;
-  font-family:'Pretendard GOV',sans-serif;
   transition:all .15s; white-space:nowrap;
 }
-.btn:hover{ border-color:var(--accent); color:var(--accent); background:rgba(96,165,250,.08); }
-body.light .btn:hover{ background:rgba(29,78,216,.06); }
-.btn:disabled{ opacity:.3; cursor:default; pointer-events:none; }
-.btn.on, .icon-btn.on{
-  background:rgba(96,165,250,.15);
-  border-color:var(--accent); color:var(--accent);
-}
-body.light .btn.on, body.light .icon-btn.on{ background:rgba(29,78,216,.09); }
+.btn:hover{ border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
 .sep{ width:1px; height:20px; background:var(--border); margin:0 4px; flex-shrink:0; }
-#zv{ font-size:12px; min-width:38px; text-align:center; color:var(--muted); }
 #pi{ font-size:12px; color:var(--muted); white-space:nowrap; margin-left:4px; }
 
 /* === URL 입력 바 === */
@@ -147,23 +173,18 @@ body.light .btn.on, body.light .icon-btn.on{ background:rgba(29,78,216,.09); }
   white-space:nowrap; letter-spacing:.06em; text-transform:uppercase;
 }
 #ui{
-  flex:1; background:var(--bg);
+  flex:1; min-width:0; background:var(--bg);
   border:1px solid var(--border); color:var(--ui);
   padding:6px 12px; border-radius:6px;
-  font-size:13px; font-family:'Pretendard GOV',sans-serif;
+  font-size:13px;
   outline:none; transition:border-color .15s, box-shadow .15s;
 }
-#ui:focus{
-  border-color:var(--accent);
-  box-shadow:0 0 0 3px rgba(96,165,250,.18);
-}
-body.light #ui:focus{ box-shadow:0 0 0 3px rgba(29,78,216,.12); }
-#ui::placeholder{ color:var(--muted); opacity:.65; }
+#ui:focus{ border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+#ui::placeholder{ color:var(--muted); opacity:.75; }
 #lub{
   background:var(--accent); border:none; color:#fff;
   padding:6px 18px; border-radius:6px;
   cursor:pointer; font-size:13px; font-weight:600;
-  font-family:'Pretendard GOV',sans-serif;
   transition:background .15s; white-space:nowrap;
 }
 #lub:hover{ background:var(--accent2); }
@@ -175,10 +196,10 @@ body.light #ui:focus{ box-shadow:0 0 0 3px rgba(29,78,216,.12); }
   position:relative; overflow:hidden;
 }
 body.drag-over #main::after{
-  content:'PDF 파일을 여기에 놓으세요';
-  position:absolute; inset:0;
-  background:rgba(96,165,250,.07);
-  border:2px dashed var(--accent); border-radius:8px;
+  content:attr(data-drop);
+  position:absolute; inset:8px;
+  background:var(--accent-soft);
+  border:2px dashed var(--accent); border-radius:12px;
   display:flex; align-items:center; justify-content:center;
   font-size:18px; font-weight:600; color:var(--accent);
   z-index:500; pointer-events:none;
@@ -188,174 +209,175 @@ body.drag-over #main::after{
 #land{
   display:flex; flex-direction:column;
   align-items:center; justify-content:center;
-  gap:20px; text-align:center; padding:48px 40px;
+  gap:18px; text-align:center; padding:40px 24px;
+  max-width:640px;
 }
-.bi{ font-size:58px; color:var(--accent); line-height:1; }
+.bi{ font-size:64px; color:var(--accent); line-height:1; animation:bookBob 3.6s ease-in-out infinite; }
+@keyframes bookBob{ 0%,100%{ transform:translateY(0) rotate(-2deg); } 50%{ transform:translateY(-6px) rotate(2deg); } }
 #land h2{
   font-size:26px; color:var(--ui);
   line-height:1.4; letter-spacing:-.01em; font-weight:700;
 }
 #land p{ font-size:14px; color:var(--muted); line-height:1.85; }
+.chips{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+.chip{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:6px 12px; border-radius:999px;
+  background:var(--surface); border:1px solid var(--border);
+  font-size:12px; color:var(--ui);
+}
+.chip .mat{ font-size:16px; color:var(--accent); }
 #file-label-big{
   display:inline-flex; align-items:center; gap:8px;
   background:var(--accent); color:#fff; border:none;
-  padding:13px 34px; border-radius:8px;
+  padding:13px 30px; border-radius:10px;
   font-size:15px; font-weight:600;
   cursor:pointer; transition:all .15s;
   letter-spacing:.01em; user-select:none;
+  box-shadow:0 6px 18px rgba(37,110,244,.28);
 }
 #file-label-big:hover{ background:var(--accent2); transform:translateY(-1px); }
+#land-url-hint{ font-size:12px !important; margin-top:-6px; }
 
-/* === PDF 뷰어 === */
+/* === PDF 뷰어 (책상 위의 책) === */
 #vwr{
-  display:none; position:relative;
-  width:100%; height:100%;
-  align-items:flex-start; justify-content:flex-start;
-  perspective:2200px; overflow:auto;
-  padding:24px 72px 48px;
-  cursor:grab; scrollbar-width:none;
+  display:none; position:absolute; inset:0;
+  overflow:auto; padding:28px 84px 84px;
+  touch-action:pan-x pan-y;
+  scrollbar-width:none;
+  background:radial-gradient(ellipse at 50% 42%, var(--desk-hi) 0%, var(--desk-lo) 78%);
 }
 #vwr::-webkit-scrollbar{ width:0; height:0; }
+body.reading #vwr{ display:flex; }
+#vwr.pan{ cursor:grab; }
+#vwr.pan .stf__parent{ touch-action:pan-x pan-y; }
 #vwr.dragging{ cursor:grabbing; user-select:none; }
-#book{
-  position:relative; display:flex;
-  align-items:stretch; transform-style:preserve-3d; margin:auto;
+#stage{
+  position:relative; margin:auto; flex-shrink:0;
+  transform-origin:center center;
 }
-#book.single{ box-shadow:2px 2px 0 rgba(0,0,0,.13),4px 4px 0 rgba(0,0,0,.09),6px 6px 0 rgba(0,0,0,.06),0 20px 60px var(--shadow); }
-#book.spread{ box-shadow:-2px 2px 0 rgba(0,0,0,.13),-4px 4px 0 rgba(0,0,0,.09),-6px 6px 0 rgba(0,0,0,.06),0 20px 60px var(--shadow); }
-#book.spread::after{
-  content:''; position:absolute; top:0; bottom:0; left:50%;
-  transform:translateX(-50%); width:14px; pointer-events:none; z-index:5;
-  background:linear-gradient(to right,rgba(0,0,0,.13),rgba(0,0,0,.03) 35%,transparent 50%,rgba(0,0,0,.03) 65%,rgba(0,0,0,.11));
+#shift{
+  position:absolute; inset:0;
+  transition:transform .65s cubic-bezier(.3,.7,.25,1);
 }
-.slot{ position:relative; overflow:hidden; background:var(--paper); }
-.pg-layer{ position:relative; }
-.slot canvas{ display:block; }
-.text-layer{
-  position:absolute; inset:0; overflow:hidden;
-  line-height:1; user-select:text; -webkit-user-select:text;
-  cursor:text; color:transparent;
+.no-anim, .no-anim *{ transition:none !important; }
+/* 책 아래 깔리는 그림자 */
+#book-shadow{
+  position:absolute; top:0; height:100%; z-index:0;
+  border-radius:2px 3px 3px 2px;
+  box-shadow:
+    0 1px 2px rgba(0,0,0,.10),
+    0 16px 32px -10px var(--book-shadow),
+    0 36px 70px -24px var(--book-shadow);
+  transition:left .65s cubic-bezier(.3,.7,.25,1), width .65s cubic-bezier(.3,.7,.25,1);
 }
-.text-layer span, .text-layer br{
-  position:absolute; white-space:pre;
-  transform-origin:0% 0%; color:transparent;
+/* 종이 단면 — 읽은 쪽(왼쪽)과 남은 쪽(오른쪽)의 두께 */
+.edge{
+  position:absolute; top:2px; bottom:2px; z-index:1;
+  background:repeating-linear-gradient(to right, var(--edge-a) 0 1px, var(--edge-b) 1px 2px);
+  transition:width .65s cubic-bezier(.3,.7,.25,1), left .65s cubic-bezier(.3,.7,.25,1);
+  pointer-events:none;
 }
-.slot::before{
-  content:''; position:absolute; inset:0; pointer-events:none; z-index:2;
-  background:linear-gradient(to right, rgba(0,0,0,.11), transparent 14%, transparent 86%, rgba(0,0,0,.09));
-  mix-blend-mode:multiply; opacity:.55;
-}
-.slot::after{
-  content:''; position:absolute; inset:0; z-index:1;
-  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.045'/%3E%3C/svg%3E");
-  pointer-events:none; opacity:.6; mix-blend-mode:overlay;
-}
-.pn{ position:absolute; bottom:10px; font-size:10px; color:rgba(80,60,40,.4); pointer-events:none; user-select:none; }
-.pn.l{ left:14px; } .pn.r{ right:14px; }
-#spl{ display:none !important; width:0 !important; }
+.edge.l{ border-radius:3px 0 0 3px; box-shadow:-1px 1px 2px rgba(0,0,0,.12); }
+.edge.r{ border-radius:0 3px 3px 0; box-shadow:1px 1px 2px rgba(0,0,0,.12); }
+.flipbook{ position:absolute; left:0; top:0; z-index:2; }
+.flipbook .stf__wrapper{ position:relative; width:100%; height:100%; }
 
-/* === 페이지 이동 버튼 === */
+/* 한 장의 종이 */
+.pf-page{ background:var(--paper); overflow:hidden; user-select:none; -webkit-user-select:none; }
+.pf-page.blank{ background:#FBF9F4; }
+.pf-page canvas.pf-canvas{
+  position:absolute; display:block;
+  width:auto; height:auto; pointer-events:none;
+}
+/* 렌더링 전 자리표시 */
+.pf-ph{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(100deg, #fbfaf6 30%, #f1eee6 50%, #fbfaf6 70%);
+  background-size:300% 100%; animation:phShine 1.6s linear infinite;
+  color:#c9c1b1; font-size:28px; font-weight:700;
+}
+.pf-page.ready .pf-ph, .pf-page.blank .pf-ph{ display:none; }
+@keyframes phShine{ from{ background-position:100% 0; } to{ background-position:-100% 0; } }
+/* 종이 결 */
+.pf-grain{
+  position:absolute; inset:0; pointer-events:none; z-index:3;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+  opacity:.07; mix-blend-mode:multiply;
+}
+/* 제본선(gutter) 음영 + 바깥쪽 가장자리 빛 */
+.pf-shade{ position:absolute; inset:0; pointer-events:none; z-index:4; }
+.pf-page.--left .pf-shade{
+  background:
+    linear-gradient(to left, rgba(0,0,0,.22) 0, rgba(0,0,0,.08) 2.5%, rgba(0,0,0,.02) 7%, transparent 14%),
+    linear-gradient(to right, rgba(0,0,0,.05) 0, transparent 2%);
+}
+.pf-page.--right .pf-shade{
+  background:
+    linear-gradient(to right, rgba(0,0,0,.22) 0, rgba(0,0,0,.08) 2.5%, rgba(0,0,0,.02) 7%, transparent 14%),
+    linear-gradient(to left, rgba(0,0,0,.05) 0, transparent 2%);
+}
+.pf-page.--hard .pf-shade{ opacity:.45; }
+.pf-page.--hard{ box-shadow:inset 0 0 0 1px rgba(0,0,0,.06); }
+.pf-num{
+  position:absolute; bottom:8px; z-index:5;
+  font-size:10px; color:rgba(80,60,40,.45); pointer-events:none;
+}
+/* 글자 선택 레이어 (PDF.js text layer) — 투명한 글자를 실제 글자 위치에 겹쳐 둔다 */
+.pf-text{
+  position:absolute; z-index:6; overflow:hidden; line-height:1;
+  user-select:text; -webkit-user-select:text;
+}
+.pf-text span, .pf-text br{
+  position:absolute; white-space:pre; color:transparent;
+  transform-origin:0% 0%; cursor:text;
+}
+.pf-text span::selection{ background:rgba(37,110,244,.32); color:transparent; }
+.pf-text br::selection{ background:transparent; }
+.pf-page.--left .pf-num{ left:12px; }
+.pf-page.--right .pf-num{ right:12px; }
+/* 단면 보기에서는 오른쪽 페이지 모양이지만 번호는 오른쪽 아래 */
+
+/* === 읽기 컨트롤(페이지 버튼·슬라이더) === */
+#reader-ui{
+  display:none; position:absolute; inset:0;
+  pointer-events:none; z-index:60;
+  transition:opacity .35s;
+}
+body.reading #reader-ui{ display:block; }
 .nav{
   position:absolute; top:50%; transform:translateY(-50%);
+  pointer-events:auto;
   background:var(--surface); border:1px solid var(--border);
-  color:var(--ui); width:44px; height:44px; border-radius:50%;
-  cursor:pointer; font-size:20px;
-  display:flex; align-items:center; justify-content:center;
-  transition:all .15s; z-index:50;
-  backdrop-filter:blur(8px);
-  box-shadow:0 2px 8px var(--shadow);
-}
-.nav:hover{
-  background:var(--accent); border-color:var(--accent); color:#fff;
-  transform:translateY(-50%) scale(1.08);
-}
-.nav:disabled{ opacity:.2; cursor:default; pointer-events:none; }
-#pb{ left:12px; } #nb{ right:12px; }
-.book-tap{
-  position:absolute;
-  bottom:0;
-  width:14%;
-  height:14%;
-  max-width:90px;
-  max-height:110px;
-  border:none;
-  background:transparent;
+  color:var(--ui); width:46px; height:46px; border-radius:50%;
   cursor:pointer;
-  z-index:55;
-  color:transparent;
+  display:flex; align-items:center; justify-content:center;
+  transition:all .15s;
+  box-shadow:0 2px 10px var(--shadow);
 }
-.book-tap:focus-visible{
-  outline:2px solid var(--accent);
-  outline-offset:-2px;
+.nav .mat{ font-size:26px; }
+.nav:hover{ background:var(--accent); border-color:var(--accent); color:#fff; transform:translateY(-50%) scale(1.06); }
+.nav:disabled{ opacity:.25; cursor:default; pointer-events:none; }
+#pb{ left:16px; } #nb{ right:16px; }
+#reader-bar{
+  position:absolute; left:50%; bottom:18px; transform:translateX(-50%);
+  width:min(560px, calc(100% - 200px));
+  display:flex; align-items:center; gap:12px;
+  padding:8px 16px; border-radius:999px;
+  background:color-mix(in srgb, var(--surface) 88%, transparent);
+  border:1px solid var(--border);
+  box-shadow:0 6px 20px var(--shadow);
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  pointer-events:auto;
 }
-#book-tap-prev{ left:0; }
-#book-tap-next{ right:0; }
-
-/* === 페이지 넘김 애니메이션 (종이 질감 3D) === */
-/* 회전 씬(원근감) */
-.flip-scene{
-  position:absolute; top:0; height:100%;
-  pointer-events:none; z-index:30;
-  perspective:1800px; perspective-origin:center center;
+#reader-bar .mat{ color:var(--muted); font-size:18px; }
+#scrub{ flex:1; min-width:0; accent-color:var(--accent); height:20px; cursor:pointer; }
+#scrub-label{
+  font-size:12px; color:var(--ui); white-space:nowrap; font-weight:600;
+  min-width:64px; text-align:right; font-variant-numeric:tabular-nums;
 }
-/* 반대쪽 정지 페이지: 회전 중 이전 내용을 덮어 즉시 교체(깜빡임) 방지 */
-.flip-static{
-  position:absolute; top:0; height:100%;
-  pointer-events:none; z-index:28; overflow:hidden;
-  background:var(--paper);
-}
-.flip-static canvas{ width:100%; height:100%; display:block; }
-/* 뒤집히는 한 장의 종이 */
-.flip-card{
-  position:absolute; inset:0;
-  transform-style:preserve-3d;
-  will-change:transform;
-}
-.flip-card.to-left{ transform-origin:left center; }
-.flip-card.to-right{ transform-origin:right center; }
-/* .go 클래스가 붙는 순간 회전 시작 (그 전엔 정지 상태로 새 페이지 렌더를 가림) */
-.flip-card.go.to-left{ animation:f-left var(--flip-dur,.6s) cubic-bezier(.2,.62,.25,1) forwards; }
-.flip-card.go.to-right{ animation:f-right var(--flip-dur,.6s) cubic-bezier(.2,.62,.25,1) forwards; }
-.flip-face{
-  position:absolute; inset:0;
-  backface-visibility:hidden; overflow:hidden;
-  background:var(--paper);
-}
-.flip-face canvas{ width:100%; height:100%; display:block; }
-/* 앞면 접힘 그림자(fold crease) — 회전축(spine) 쪽으로 음영 */
-.flip-face.front::before{
-  content:''; position:absolute; inset:0; pointer-events:none; z-index:2;
-}
-.flip-card.to-left .flip-face.front::before{
-  background:linear-gradient(to right,rgba(0,0,0,.20),rgba(0,0,0,.04) 16%,transparent 36%);
-}
-.flip-card.to-right .flip-face.front::before{
-  background:linear-gradient(to left,rgba(0,0,0,.20),rgba(0,0,0,.04) 16%,transparent 36%);
-}
-/* 뒷면: 따뜻한 종이 질감 */
-.flip-face.back{
-  transform:rotateY(180deg);
-  background:linear-gradient(155deg,#f8f5ef 0%,#ece7df 55%,#f3efe7 100%);
-}
-.flip-face.back::after{
-  content:''; position:absolute; inset:0; pointer-events:none;
-  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.06'/%3E%3C/svg%3E");
-  opacity:.6; mix-blend-mode:multiply;
-}
-/* 뒷면 접힘 그림자 — 회전축 쪽 */
-.flip-card.to-left .flip-face.back::before{
-  content:''; position:absolute; inset:0; pointer-events:none;
-  background:linear-gradient(to left,rgba(0,0,0,.16),transparent 34%);
-}
-.flip-card.to-right .flip-face.back::before{
-  content:''; position:absolute; inset:0; pointer-events:none;
-  background:linear-gradient(to right,rgba(0,0,0,.16),transparent 34%);
-}
-@keyframes f-left  { from{ transform:rotateY(0) } to{ transform:rotateY(-180deg) } }
-@keyframes f-right { from{ transform:rotateY(0) } to{ transform:rotateY( 180deg) } }
-@media (prefers-reduced-motion: reduce){
-  .flip-card.go.to-left, .flip-card.go.to-right{ animation-duration:.001s; }
-}
+body.slideshow.idle #reader-ui{ opacity:0; }
+body.slideshow.idle #vwr{ cursor:none; }
 
 /* === 임베드 뷰어 === */
 #embed-wrap{
@@ -373,26 +395,15 @@ body.drag-over #main::after{
   pointer-events:none; backdrop-filter:blur(4px);
 }
 
-/* === 진행 바 & 힌트 === */
-#progbar{
-  display:none !important; position:fixed; bottom:0; left:0; height:3px;
-  background:linear-gradient(90deg, var(--accent2), var(--accent));
-  transition:width .4s ease; z-index:100; pointer-events:none; border-radius:0 2px 0 0;
-}
-#kbh{
-  position:absolute; bottom:12px; right:16px;
-  font-size:11px; color:var(--muted); pointer-events:none; opacity:.7;
-}
-
 /* === 로딩 오버레이 === */
 #ldr{
   display:none; position:absolute; inset:0;
-  background:rgba(15,23,42,.88);
+  background:rgba(19,20,22,.86);
   align-items:center; justify-content:center;
   flex-direction:column; gap:16px; z-index:400;
   backdrop-filter:blur(4px);
 }
-body.light #ldr{ background:rgba(245,247,250,.93); }
+body.light #ldr{ background:rgba(244,245,246,.92); }
 #ldr.on{ display:flex; }
 .sp{
   width:36px; height:36px;
@@ -404,42 +415,48 @@ body.light #ldr{ background:rgba(245,247,250,.93); }
 
 /* === 토스트 메시지 === */
 #em,#sm{
-  display:none; position:absolute; bottom:24px; left:50%;
+  display:none; position:absolute; top:16px; left:50%;
   transform:translateX(-50%);
-  padding:12px 20px; border-radius:8px;
+  padding:11px 18px; border-radius:10px;
   font-size:13px; z-index:500;
   text-align:center; line-height:1.6;
-  max-width:88%; white-space:pre-line;
-  box-shadow:0 4px 16px rgba(0,0,0,.18);
+  max-width:min(560px, 90%); white-space:pre-line;
+  box-shadow:0 6px 20px rgba(0,0,0,.18);
 }
 #em{ background:#450A0A; color:#FCA5A5; border:1px solid #7F1D1D; }
 body.light #em{ background:#FEE2E2; color:#991B1B; border-color:#FECACA; }
-#sm{ background:#064E3B; color:#6EE7B7; border:1px solid #065F46; }
-body.light #sm{ background:#D1FAE5; color:#065F46; border-color:#A7F3D0; }
+#sm{ background:#0B3B2C; color:#A7F3D0; border:1px solid #065F46; }
+body.light #sm{ background:#E8F7EE; color:#14532D; border-color:#BBE5CB; }
 #em.on,#sm.on{ display:block; animation:fdin .25s ease; }
 @keyframes fdin{
-  from{ opacity:0; transform:translateX(-50%) translateY(8px); }
+  from{ opacity:0; transform:translateX(-50%) translateY(-8px); }
   to{ opacity:1; transform:translateX(-50%); }
 }
 
 /* === 도움말 모달 === */
 #help-modal{
   position:absolute; inset:0;
-  background:rgba(0,0,0,.6); z-index:600;
+  background:rgba(0,0,0,.55); z-index:600;
   display:none; align-items:center; justify-content:center;
   padding:20px; backdrop-filter:blur(4px);
 }
 #help-modal.on{ display:flex; }
 #help-card{
-  width:min(640px,96vw); max-height:85vh; overflow:auto;
+  width:min(640px,96vw); max-height:85%; overflow:auto;
   border:1px solid var(--border);
   background:var(--surface);
-  border-radius:12px; padding:24px;
+  border-radius:16px; padding:24px;
   box-shadow:0 24px 64px rgba(0,0,0,.3);
 }
-#help-card h3{ color:var(--ui); margin-bottom:16px; font-size:18px; font-weight:700; }
-#help-card ol{ padding-left:20px; color:var(--ui); line-height:1.9; font-size:14px; }
+#help-card h3{ color:var(--ui); margin-bottom:16px; font-size:18px; font-weight:700; display:flex; align-items:center; gap:8px; }
+#help-card h3 .mat{ color:var(--accent); font-size:22px; }
+#help-card ol{ padding-left:20px; color:var(--ui); line-height:1.8; font-size:14px; }
 #help-card b{ color:var(--accent); font-weight:600; }
+#help-card kbd{
+  display:inline-block; padding:0 6px; border-radius:4px;
+  border:1px solid var(--border); background:var(--bg);
+  font-size:12px; font-family:inherit; line-height:1.6;
+}
 #help-card li+li{ margin-top:8px; }
 #help-close{ margin-top:18px; }
 
@@ -451,799 +468,1476 @@ body.light #sm{ background:#D1FAE5; color:#065F46; border-color:#A7F3D0; }
   font-size:12px; color:var(--muted);
 }
 #privacy-note{ margin:0 0 3px; font-size:12px; line-height:1.5; }
-#ft a{ color:var(--accent); text-decoration:none; }
-#ft a:hover{ text-decoration:underline; }
+#ft a{ display:inline-flex; align-items:center; gap:4px; color:var(--muted); text-decoration:none; transition:color .2s; }
+#ft a .mat{ font-size:15px; }
+#ft a:hover{ color:var(--accent); }
 body.slideshow #tb,
 body.slideshow #ub,
 body.slideshow #ft{ display:none; }
-body.slideshow #main{ padding:0; }
 
 /* === 모바일 반응형 === */
 @media (max-width: 900px){
   #tb{
-    padding:10px 12px; gap:6px;
+    padding:8px 10px; gap:6px;
     overflow-x:auto; overflow-y:hidden;
-    scrollbar-width:thin;
+    scrollbar-width:none;
   }
+  #tb::-webkit-scrollbar{ display:none; }
   #tb h1{ font-size:14px; margin-right:0; flex-shrink:0; }
   .tb-group{ flex-shrink:0; }
-  #pi{ flex-shrink:0; }
+  #pi{ display:none; }
   .sep{ display:none; }
-  .btn, #file-label, #lub, .icon-btn{ min-height:36px; padding:7px 10px; font-size:13px; }
-  .page-jump input{ width:72px; height:34px; }
+  .icon-btn, #file-label{ width:36px; height:36px; }
+  .page-jump input{ width:52px; height:36px; }
   #ub{ padding:8px 12px; gap:8px; }
   #ub label{ display:none; }
-  #land{ padding:32px 16px; gap:16px; }
+  #land{ padding:28px 16px; gap:14px; }
   #land h2{ font-size:22px; }
-  .nav{ width:48px; height:48px; bottom:16px; top:auto; transform:none; }
+  #vwr{ padding:16px 12px 84px; }
+  .nav{ width:44px; height:44px; top:auto; bottom:16px; transform:none; }
   .nav:hover{ transform:none; }
   #pb{ left:12px; } #nb{ right:12px; }
-  .book-tap{
-    width:18%;
-    height:18%;
-    max-width:90px;
-    max-height:110px;
-  }
-  #kbh{ display:none; }
+  #reader-bar{ width:calc(100% - 132px); bottom:18px; padding:7px 12px; gap:8px; }
+  #reader-bar .mat{ display:none; }
+  #scrub-label{ min-width:auto; }
   #embed-wrap{ width:96vw; height:78vh; }
   #embed-hint{ font-size:10px; padding:5px 8px; right:8px; top:8px; }
-  #vwr{ padding:16px 8px 64px; }
-  #ft{ font-size:11px; padding:7px 10px; }
+  #ft{ font-size:11px; padding:6px 10px; }
   #privacy-note{ font-size:11px; }
 }
 @media (max-width: 640px){
-  #tb h1{ display:none; }
-  #tb{ padding:8px 8px; }
+  #tb h1 .ttl{ display:none; }
+}
+@media (max-width: 520px){
+  #tb h1, #zo, #zi, #page-go{ display:none; }
   #ub{ padding:8px; }
-  #ui{ min-width:0; }
   #lub{ padding:6px 12px; }
+  #zv{ min-width:40px; }
+}
+@media (prefers-reduced-motion: reduce){
+  #shift, #book-shadow, .edge{ transition:none; }
+  .bi, .pf-ph{ animation:none; }
 }
 </style>
 </head>
-<body>
-<input type="file" id="fi" accept="application/pdf" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;">
-<input type="file" id="ebook-fi" accept=".ebook,application/json" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;">
+<body class="light">
+<input type="file" id="fi" accept="application/pdf,.pdf">
+<input type="file" id="ebook-fi" accept=".ebook,application/json">
 
 <div id="tb">
-  <h1 id="app-title">Easy book</h1>
+  <h1 id="app-title"><span class="mat" aria-hidden="true">auto_stories</span><span class="ttl">Easy book</span></h1>
 
   <div class="tb-group">
-    <button class="icon-btn" id="view-toggle" title="한쪽/두쪽 보기 전환" aria-label="한쪽/두쪽 보기 전환"><span class="mat" id="view-icon">auto_stories</span></button>
-    <span class="sep"></span>
-    <button class="icon-btn" id="zo" title="축소" aria-label="축소"><span class="mat">zoom_out</span></button>
-    <button class="icon-btn" id="zi" title="확대" aria-label="확대"><span class="mat">zoom_in</span></button>
-    <span class="sep"></span>
-    <div class="page-jump">
-      <input type="number" id="page-input" min="1" step="1" placeholder="">
-      <button class="icon-btn" id="page-go" title="페이지 이동" aria-label="페이지 이동"><span class="mat">subdirectory_arrow_right</span></button>
+    <button class="icon-btn" id="view-toggle" data-i18n-title="viewToggleTitle"><span class="mat" id="view-icon">auto_stories</span></button>
+    <span class="sep reading-only"></span>
+    <button class="icon-btn reading-only" id="zo" data-i18n-title="zoomOut"><span class="mat">zoom_out</span></button>
+    <button id="zv" class="reading-only" data-i18n-title="fitScreen">100%</button>
+    <button class="icon-btn reading-only" id="zi" data-i18n-title="zoomIn"><span class="mat">zoom_in</span></button>
+    <span class="sep reading-only"></span>
+    <div class="page-jump reading-only">
+      <input type="number" id="page-input" min="1" step="1" inputmode="numeric" data-i18n-ph="pagePlaceholder" data-i18n-title="pageGo">
+      <span id="page-total"></span>
+      <button class="icon-btn" id="page-go" data-i18n-title="pageGo"><span class="mat">subdirectory_arrow_right</span></button>
     </div>
   </div>
 
   <div class="tb-spacer"></div>
-  <span id="pi"></span>
+  <span id="pi" aria-live="polite"></span>
 
   <div class="tb-group">
-    <label id="file-label" for="fi" title="파일 열기" aria-label="파일 열기"><span class="mat">folder_open</span></label>
-    <button class="icon-btn" id="theme-btn" title="다크/라이트 모드" aria-label="다크/라이트 모드"><span class="mat" id="theme-icon">dark_mode</span></button>
-    <button class="icon-btn" id="fullscreen-btn" title="전체화면" aria-label="전체화면"><span class="mat" id="fullscreen-icon">fullscreen</span></button>
+    <label id="file-label" for="fi" data-i18n-title="fileOpen"><span class="mat">folder_open</span></label>
+    <button class="icon-btn" id="theme-btn" data-i18n-title="themeTitle"><span class="mat" id="theme-icon">dark_mode</span></button>
+    <button class="icon-btn" id="fullscreen-btn" data-i18n-title="fullscreenTitle"><span class="mat" id="fullscreen-icon">fullscreen</span></button>
     <div class="menu-wrap">
-      <button class="icon-btn" id="more-btn" title="더보기" aria-label="더보기" aria-expanded="false" aria-controls="more-menu"><span class="mat">more_vert</span></button>
-      <div class="menu-panel" id="more-menu" role="menu" aria-label="더보기">
-        <button class="menu-action" id="project-save-action" role="menuitem">프로젝트 저장</button>
-        <button class="menu-action" id="project-load-action" role="menuitem">프로젝트 불러오기</button>
-        <button class="menu-action" id="share-action" role="menuitem">공유 링크 복사</button>
+      <button class="icon-btn" id="more-btn" data-i18n-title="moreTitle" aria-haspopup="menu" aria-expanded="false" aria-controls="more-menu"><span class="mat">more_vert</span></button>
+      <div class="menu-panel" id="more-menu" role="menu">
+        <button class="menu-action" id="sound-action" role="menuitemcheckbox" aria-checked="true"><span class="mat" id="sound-icon">volume_up</span><span data-i18n="soundLabel"></span><span class="tail" id="sound-state"></span></button>
         <div class="menu-sep"></div>
-        <button class="menu-action" id="first-action" role="menuitem">첫 페이지</button>
-        <button class="menu-action" id="last-action" role="menuitem">끝 페이지</button>
-        <button class="menu-action" id="fit-action" role="menuitem">화면 맞춤</button>
+        <button class="menu-action" id="first-action" role="menuitem"><span class="mat">first_page</span><span data-i18n="firstPage"></span></button>
+        <button class="menu-action" id="last-action" role="menuitem"><span class="mat">last_page</span><span data-i18n="lastPage"></span></button>
+        <button class="menu-action" id="fit-action" role="menuitem"><span class="mat">fit_screen</span><span data-i18n="fitScreen"></span></button>
         <div class="menu-sep"></div>
-        <div class="menu-label" id="lang-label">언어</div>
-        <button class="menu-action lang-opt" id="lang-ko" role="menuitem">한국어</button>
-        <button class="menu-action lang-opt" id="lang-en" role="menuitem">English</button>
-        <button class="menu-action lang-opt" id="lang-ja" role="menuitem">日本語</button>
+        <button class="menu-action" id="project-save-action" role="menuitem"><span class="mat">save</span><span data-i18n="projectSave"></span></button>
+        <button class="menu-action" id="project-load-action" role="menuitem"><span class="mat">file_open</span><span data-i18n="projectLoad"></span></button>
+        <button class="menu-action" id="share-action" role="menuitem"><span class="mat">link</span><span data-i18n="shareTitle"></span></button>
         <div class="menu-sep"></div>
-        <button class="menu-action" id="reset-action" role="menuitem">초기화</button>
-        <button class="menu-action" id="help-action" role="menuitem">사용법</button>
+        <div class="menu-label" data-i18n="langTitle"></div>
+        <div class="lang-row">
+          <button class="menu-action lang-opt" id="lang-ko" role="menuitemradio">한국어</button>
+          <button class="menu-action lang-opt" id="lang-en" role="menuitemradio">English</button>
+          <button class="menu-action lang-opt" id="lang-ja" role="menuitemradio">日本語</button>
+        </div>
+        <div class="menu-sep"></div>
+        <button class="menu-action" id="help-action" role="menuitem"><span class="mat">help</span><span data-i18n="helpTitleBtn"></span></button>
+        <button class="menu-action" id="reset-action" role="menuitem"><span class="mat">restart_alt</span><span data-i18n="resetTitle"></span></button>
       </div>
     </div>
   </div>
 </div>
 
 <div id="ub">
-  <label for="ui" id="url-label">URL</label>
-  <input type="text" id="ui" placeholder="Google Drive 공유 링크 또는 직접 PDF URL">
-  <button id="lub">불러오기</button>
+  <label for="ui" data-i18n="urlLabel">URL</label>
+  <input type="url" id="ui" data-i18n-ph="urlPlaceholder" autocomplete="off" spellcheck="false">
+  <button id="lub" data-i18n="loadBtn">불러오기</button>
 </div>
 
 <div id="main">
   <div id="land">
     <div class="bi mat" aria-hidden="true">menu_book</div>
-    <h2 id="land-title">Easy book으로<br>PDF를 진짜 책처럼</h2>
-    <p id="land-desc">PDF 파일을 선택하거나 드래그해서 놓으세요.<br>한쪽보기/두쪽보기를 언제든 전환할 수 있습니다.</p>
-    <label id="file-label-big" for="fi">PDF 파일 선택</label>
-    <p id="land-url-hint" style="font-size:11px;color:var(--muted);margin-top:-10px;">또는 URL 입력란에 Google Drive 공유 링크를 붙여넣으세요</p>
+    <h2 data-i18n-html="landTitle"></h2>
+    <p data-i18n-html="landDesc"></p>
+    <div class="chips">
+      <span class="chip"><span class="mat">swipe</span><span data-i18n="chipFlip"></span></span>
+      <span class="chip"><span class="mat">auto_stories</span><span data-i18n="chipSpread"></span></span>
+      <span class="chip"><span class="mat">lock</span><span data-i18n="chipPrivate"></span></span>
+    </div>
+    <label id="file-label-big" for="fi"><span class="mat">upload_file</span><span data-i18n="fileSelect"></span></label>
+    <p id="land-url-hint" data-i18n="landUrlHint"></p>
   </div>
 
   <div id="vwr">
-    <div id="book" class="single">
-      <div class="slot" id="ls"><div class="pg-layer"><canvas id="lc"></canvas><div class="text-layer" id="ltl"></div></div><span class="pn l" id="ln"></span></div>
-      <div id="spl"></div>
-      <div class="slot" id="rs"><div class="pg-layer"><canvas id="rc"></canvas><div class="text-layer" id="rtl"></div></div><span class="pn r" id="rn"></span></div>
-      <button class="book-tap" id="book-tap-prev" aria-label="이전 페이지로 이동"></button>
-      <button class="book-tap" id="book-tap-next" aria-label="다음 페이지로 이동"></button>
+    <div id="stage">
+      <div id="shift">
+        <div id="book-shadow"></div>
+        <div class="edge l" id="edge-l"></div>
+        <div class="edge r" id="edge-r"></div>
+        <!-- .flipbook (StPageFlip) 이 여기에 생성됩니다 -->
+      </div>
     </div>
-    <button class="nav" id="pb">‹</button>
-    <button class="nav" id="nb">›</button>
-    <div id="kbh">← → 키로 이동</div>
-    <div id="progbar" style="width:0%"></div>
+  </div>
+
+  <div id="reader-ui">
+    <button class="nav" id="pb" data-i18n-title="prevPage"><span class="mat">chevron_left</span></button>
+    <button class="nav" id="nb" data-i18n-title="nextPage"><span class="mat">chevron_right</span></button>
+    <div id="reader-bar">
+      <span class="mat" aria-hidden="true">auto_stories</span>
+      <input type="range" id="scrub" min="1" max="1" step="1" value="1" data-i18n-title="scrubAria">
+      <span id="scrub-label"></span>
+    </div>
   </div>
 
   <div id="embed-wrap">
     <iframe id="embed-frame" title="Google Drive embedded preview"></iframe>
-    <div id="embed-hint">임베드 모드 · 페이지 이동은 Google 뷰어에서 제어됩니다</div>
+    <div id="embed-hint" data-i18n="embedHint"></div>
   </div>
 
-  <div id="ldr"><div class="sp"></div><p id="lt">로딩 중…</p></div>
-  <div id="em"></div>
-  <div id="sm"></div>
+  <div id="ldr" role="status" aria-live="polite"><div class="sp"></div><p id="lt"></p></div>
+  <div id="em" role="alert"></div>
+  <div id="sm" role="status" aria-live="polite"></div>
 
-  <div id="help-modal">
+  <div id="help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title">
     <div id="help-card">
-      <h3 id="help-title">Easy book 사용법</h3>
+      <h3><span class="mat" aria-hidden="true">menu_book</span><span id="help-title" data-i18n="helpTitle"></span></h3>
       <ol id="help-list"></ol>
-      <button class="btn" id="help-close">닫기</button>
+      <button class="btn" id="help-close" data-i18n="helpClose"></button>
     </div>
   </div>
 </div>
 
 <footer id="ft">
-  <p id="privacy-note">개인정보 보호 안내: 파일과 URL 데이터는 브라우저에서만 처리되며 Easy book 서버에 저장되지 않습니다.</p>
-  <a href="https://litt.ly/chichiboo" target="_blank" rel="noopener noreferrer">Created by. 교육뮤지컬 꿈꾸는 치수쌤</a>
+  <p id="privacy-note" data-i18n="privacyNote"></p>
+  <a href="https://litt.ly/chichiboo" target="_blank" rel="noopener noreferrer"><span class="mat" aria-hidden="true">auto_stories</span><span data-i18n="footer"></span></a>
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<!-- StPageFlip (MIT) — https://github.com/Nodlik/StPageFlip -->
+<script src="vendor/page-flip/page-flip.browser.js"></script>
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 const PROXY_URL = "https://easybook-proxy.wchisu.workers.dev/?url=";
 
-const land = document.getElementById('land');
-const vwr = document.getElementById('vwr');
-const book = document.getElementById('book');
-const ls = document.getElementById('ls'), rs = document.getElementById('rs');
-const lc = document.getElementById('lc'), rc = document.getElementById('rc');
-const ltl = document.getElementById('ltl'), rtl = document.getElementById('rtl');
-const spl = document.getElementById('spl');
-const ln = document.getElementById('ln'), rn = document.getElementById('rn');
-const pb = document.getElementById('pb'), nb = document.getElementById('nb');
-const tapPrev = document.getElementById('book-tap-prev');
-const tapNext = document.getElementById('book-tap-next');
-const pi = document.getElementById('pi');
-const ldr = document.getElementById('ldr'), lt = document.getElementById('lt');
-const fi = document.getElementById('fi');
-const ebookFi = document.getElementById('ebook-fi');
-const uiEl = document.getElementById('ui');
-const progbar = document.getElementById('progbar');
-const emEl = document.getElementById('em');
-const smEl = document.getElementById('sm');
-const viewToggleBtn = document.getElementById('view-toggle');
-const viewIcon = document.getElementById('view-icon');
-const firstAction = document.getElementById('first-action');
-const lastAction = document.getElementById('last-action');
-const fitAction = document.getElementById('fit-action');
-const pageInput = document.getElementById('page-input');
-const pageGoBtn = document.getElementById('page-go');
-const moreBtn = document.getElementById('more-btn');
-const moreMenu = document.getElementById('more-menu');
-const shareAction = document.getElementById('share-action');
-const resetAction = document.getElementById('reset-action');
-const helpAction = document.getElementById('help-action');
-const langLabel = document.getElementById('lang-label');
-const projectSaveAction = document.getElementById('project-save-action');
-const projectLoadAction = document.getElementById('project-load-action');
-const langKoBtn = document.getElementById('lang-ko');
-const langEnBtn = document.getElementById('lang-en');
-const langJaBtn = document.getElementById('lang-ja');
-const themeBtn = document.getElementById('theme-btn');
-const themeIcon = document.getElementById('theme-icon');
-const fullscreenBtn = document.getElementById('fullscreen-btn');
-const fullscreenIcon = document.getElementById('fullscreen-icon');
-const helpModal = document.getElementById('help-modal');
-const helpTitle = document.getElementById('help-title');
-const helpList = document.getElementById('help-list');
-const embedWrap = document.getElementById('embed-wrap');
-const embedFrame = document.getElementById('embed-frame');
-const appTitle = document.getElementById('app-title');
-const urlLabel = document.getElementById('url-label');
-const landTitle = document.getElementById('land-title');
-const landDesc = document.getElementById('land-desc');
-const landUrlHint = document.getElementById('land-url-hint');
-const fileLabelBig = document.getElementById('file-label-big');
-const kbh = document.getElementById('kbh');
-const helpCloseBtn = document.getElementById('help-close');
-const loadUrlBtn = document.getElementById('lub');
-const footerLink = document.querySelector('#ft a');
-const privacyNote = document.getElementById('privacy-note');
+const $ = id => document.getElementById(id);
+const land = $('land'), vwr = $('vwr'), mainEl = $('main');
+const stage = $('stage'), shiftEl = $('shift');
+const bookShadow = $('book-shadow'), edgeL = $('edge-l'), edgeR = $('edge-r');
+const pb = $('pb'), nb = $('nb');
+const scrub = $('scrub'), scrubLabel = $('scrub-label');
+const pi = $('pi');
+const ldr = $('ldr'), lt = $('lt');
+const fi = $('fi'), ebookFi = $('ebook-fi');
+const uiEl = $('ui');
+const emEl = $('em'), smEl = $('sm');
+const viewToggleBtn = $('view-toggle'), viewIcon = $('view-icon');
+const zoomLabel = $('zv');
+const pageInput = $('page-input'), pageTotal = $('page-total'), pageGoBtn = $('page-go');
+const moreBtn = $('more-btn'), moreMenu = $('more-menu');
+const soundAction = $('sound-action'), soundIcon = $('sound-icon'), soundState = $('sound-state');
+const themeBtn = $('theme-btn'), themeIcon = $('theme-icon');
+const fullscreenBtn = $('fullscreen-btn'), fullscreenIcon = $('fullscreen-icon');
+const helpModal = $('help-modal'), helpList = $('help-list'), helpCloseBtn = $('help-close');
+const embedWrap = $('embed-wrap'), embedFrame = $('embed-frame');
 
-let pdfDoc = null, total = 0, curSpread = 0, spreads = [];
-let baseScale = 1, zoomF = 1, busy = false;
+// localStorage 접근은 사생활 보호 모드 등에서 예외가 날 수 있어 감싼다.
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} }
+};
+
+/* ================= 상태 ================= */
+let pdfDoc = null, total = 0, firstPageVp = null;
 let viewMode = 'double';
+let zoomF = 1;
+const ZOOM_MIN = .5, ZOOM_MAX = 3;
 let loadedSourceURL = '';
 let currentPdfBytes = null;
-let isPanning = false, panStartX = 0, panStartY = 0, panScrollL = 0, panScrollT = 0;
-let layoutRefreshTimer = null;
+let docKey = '';
+let screenMode = 'land'; // land | pdf | embed
 let currentLang = 'ko';
+let soundOn = store.get('easybook-sound') !== 'off';
+let pseudoFs = false;
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+// 책(StPageFlip) 상태
+let pf = null;            // 현재 PageFlip 인스턴스
+let bookHost = null;      // 인스턴스가 붙은 DOM
+let pageEls = [];         // 페이지 DOM (index = 책 안의 순서)
+let pageMap = [];         // index → PDF 쪽 번호 (0 = 빈 면지)
+let curIdx = 0;           // 현재 펼침의 첫 index
+let bookGen = 0;          // 다시 만들 때마다 증가 (이전 렌더 무효화)
+let layout = { pw: 0, ph: 0, landscape: true };
+let bookLoops = [];       // 현재 인스턴스의 rAF 루프 콜백
+let retired = [];         // 교체 대기 중인 이전 인스턴스
+const currentEntry = () => ({ inst: pf, host: bookHost, els: pageEls, loops: bookLoops });
+
+/* ================= 다국어 ================= */
 const I18N = {
   ko: {
-    appTitle: 'Easy book',
     urlLabel: 'URL',
     urlPlaceholder: 'Google Drive 공유 링크 또는 직접 PDF URL',
-    pagePlaceholder: '페이지',
+    pagePlaceholder: '쪽',
+    pageGo: '페이지 이동',
     loadBtn: '불러오기',
     landTitle: 'Easy book으로<br>PDF를 진짜 책처럼',
-    landDesc: 'PDF 파일을 선택하거나 드래그해서 놓으세요.<br>한쪽보기/두쪽보기를 언제든 전환할 수 있습니다.',
-    landUrlHint: '또는 URL 입력란에 Google Drive 공유 링크를 붙여넣으세요',
+    landDesc: 'PDF 파일을 선택하거나 드래그해서 놓으세요.<br>페이지 모서리를 잡아 끌면 종이가 휘어지며 넘어갑니다.',
+    landUrlHint: '또는 위 URL 입력란에 Google Drive 공유 링크를 붙여넣으세요',
+    chipFlip: '진짜 종이처럼 넘김',
+    chipSpread: '두쪽 펼침 · 하드커버',
+    chipPrivate: '브라우저 안에서만 처리',
     fileSelect: 'PDF 파일 선택',
     helpTitle: 'Easy book 사용법',
     helpClose: '닫기',
     footer: 'Created by. 교육뮤지컬 꿈꾸는 치수쌤',
     privacyNote: '개인정보 보호 안내: 파일과 URL 데이터는 브라우저에서만 처리되며 Easy book 서버에 저장되지 않습니다.',
-    kbh: '← → 키로 이동',
-    projectMenuAria: '프로젝트 작업 선택',
     projectSave: '프로젝트 저장',
     projectLoad: '프로젝트 불러오기',
-    langMenuAria: '언어 선택',
     fileOpen: '파일 열기',
-    projectTitle: '프로젝트 저장/불러오기',
-    shareTitle: '공유 링크 생성',
+    shareTitle: '공유 링크 복사',
     fullscreenTitle: '전체화면',
+    fullscreenExit: '전체화면 종료',
     themeTitle: '다크/라이트 모드',
     langTitle: '언어',
     helpTitleBtn: '사용법',
     firstPage: '첫 페이지',
     lastPage: '끝 페이지',
     fitScreen: '화면 맞춤',
+    zoomIn: '확대',
+    zoomOut: '축소',
     resetTitle: '초기화',
     moreTitle: '더보기',
     viewToggleTitle: '한쪽/두쪽 보기 전환',
+    prevPage: '이전 페이지',
+    nextPage: '다음 페이지',
+    scrubAria: '페이지 탐색',
+    soundLabel: '넘김 소리',
+    on: '켜짐', off: '꺼짐',
+    embedHint: '임베드 모드 · 페이지 이동은 Google 뷰어에서 제어됩니다',
+    dropHere: 'PDF 또는 .ebook 파일을 여기에 놓으세요',
+    cover: '표지', back: '뒷표지',
+    pages: (a, b) => `${a}–${b}쪽`,
+    page: a => `${a}쪽`,
+    needPdf: '먼저 PDF를 불러와주세요.',
+    pageRange: n => `1부터 ${n} 사이 페이지를 입력해주세요.`,
+    fsFail: '전체화면 전환 실패: ',
+    fsUnsupported: '브라우저가 기능을 지원하지 않습니다.',
+    loading: '로딩 중…',
+    rendering: 'PDF 렌더링 중…',
+    reading: '파일 읽는 중…',
+    readFail: '파일 읽기 실패',
+    pdfOnly: 'PDF 파일만 지원합니다.',
+    openFail: 'PDF 열기 실패: ',
+    opened: n => `총 ${n}쪽 · 모서리를 끌거나 클릭해서 넘겨보세요`,
+    resumed: p => `지난번에 읽던 ${p}쪽부터 이어서 엽니다.`,
+    noSave: '저장할 PDF가 없습니다. 먼저 PDF를 열어주세요.',
+    saved: '프로젝트(.ebook) 파일로 저장했습니다.',
+    projLoading: '프로젝트 파일을 불러오는 중…',
+    projLoaded: '프로젝트를 불러왔습니다.',
+    projFail: '프로젝트 불러오기 실패: ',
+    projUnsupported: '지원하지 않는 프로젝트 파일입니다.',
+    driveChecking: 'Google Drive에서 파일 확인 중…\n(공유 설정: 링크가 있는 모든 사용자)',
+    downloading: 'PDF 다운로드 중…',
+    proxy403: '프록시 403 오류: Worker의 ALLOWED_ORIGINS 설정을 현재 앱 도메인과 일치시켜주세요.\n예) https://easybook.chichiboo.link 또는 로컬 개발 주소를 추가 허용',
+    driveFail: 'Google Drive 링크 불러오기 실패\n① 파일 공유를 "링크가 있는 모든 사용자"로 설정\n② PDF 원본 링크인지 확인\n③ 계속 실패하면 로컬 파일 업로드를 사용',
+    notPdf: '응답이 PDF가 아닙니다. PDF 원본 링크인지, 로그인 없이 접근 가능한지 확인해주세요.',
+    urlFail: 'URL 로드 실패: ',
+    corsHint: '서버 CORS 설정을 확인하세요.',
+    embedSwitched: '브라우저 정책으로 PDF.js 로드가 막혀 임베드 모드로 전환했습니다.',
+    embedLabel: 'Google Drive 임베드 보기',
+    shareOnlyUrl: '공유 링크는 URL로 불러온 PDF에서만 생성됩니다.',
+    shareCopied: '공유 링크를 복사했습니다. 상대방이 같은 쪽으로 바로 열 수 있습니다.',
+    clipFail: '클립보드 복사 실패. 링크를 수동으로 복사해주세요:\n',
+    resetDone: '열려 있던 PDF를 초기화했습니다.',
+    narrowSingle: '화면이 좁아 한쪽 보기로 표시됩니다.',
     helpItems: [
-      '<b>파일 열기</b>: 상단 <b>파일 열기</b> 버튼으로 PDF를 불러오거나 드래그 앤 드롭하세요.',
+      '<b>파일 열기</b>: 상단 <b>파일 열기</b> 버튼이나 드래그 앤 드롭으로 PDF(또는 .ebook 프로젝트)를 엽니다.',
       '<b>URL 열기</b>: Google Drive 공유 링크 또는 PDF 직접 URL을 입력 후 <b>불러오기</b>를 누르세요.',
-      '<b>보기 모드</b>: <b>한쪽보기</b>/<b>두쪽보기</b>로 전환할 수 있고, 표지·뒷표지는 항상 단면으로 표시됩니다.',
-      '<b>넘기기</b>: 좌/우 화살표 버튼 또는 키보드 <b>← →</b>로 페이지를 넘길 수 있습니다.',
-      '<b>공유 링크</b>: URL로 연 문서는 <b>공유 링크</b> 버튼으로 같은 eBook 링크를 복사해 공유할 수 있습니다.',
-      '<b>개인정보</b>: 파일은 브라우저에서만 처리되며 Easy book 서버에 저장되지 않습니다. 서버로 업로드되지 않으니 안심하고 사용하셔도 됩니다.',
-      '<b>Drive 실패 시</b>: 브라우저 CORS/쿠키 정책 때문에 PDF.js 로딩이 막히면 자동으로 Drive 임베드 뷰어로 전환됩니다. (임베드에서는 페이지 이동을 Google 뷰어가 직접 처리)'
+      '<b>책장 넘기기</b>: 페이지 <b>모서리를 잡아 끌면</b> 종이가 휘어지며 넘어갑니다. 마우스를 모서리에 올리면 살짝 들춰집니다. 클릭·스와이프·<kbd>←</kbd> <kbd>→</kbd> <kbd>Space</kbd> 키도 사용할 수 있습니다.',
+      '<b>빠른 이동</b>: 하단 슬라이더나 상단 쪽 번호 입력으로 원하는 쪽까지 한 번에 넘깁니다. <kbd>Home</kbd> <kbd>End</kbd>로 처음·끝.',
+      '<b>보기 모드</b>: <b>한쪽</b>/<b>두쪽</b> 보기를 전환할 수 있고, 표지·뒷표지는 하드커버처럼 단면으로 표시됩니다.',
+      '<b>글자 선택</b>: 글자 위를 끌면 선택되고 <kbd>Ctrl</kbd>+<kbd>C</kbd>로 복사할 수 있습니다. 모바일은 글자를 길게 누르세요. (모서리·여백을 끌면 페이지가 넘어갑니다)',
+      '<b>확대/축소</b>: 상단 버튼, <kbd>Ctrl</kbd>+휠, 두 손가락 핀치. 확대 중에는 끌어서 화면을 이동하고, 배율(%)을 누르면 화면 맞춤으로 돌아갑니다.',
+      '<b>넘김 소리</b>: 더보기(⋮) 메뉴에서 종이 넘기는 소리를 켜고 끌 수 있습니다.',
+      '<b>이어 읽기</b>: 같은 PDF를 다시 열면 마지막으로 읽던 쪽부터 열립니다.',
+      '<b>공유 링크</b>: URL로 연 문서는 <b>공유 링크 복사</b>로 현재 쪽까지 담긴 링크를 공유할 수 있습니다.',
+      '<b>개인정보</b>: 파일은 브라우저에서만 처리되며 Easy book 서버에 저장되지 않습니다.',
+      '<b>Drive 실패 시</b>: 브라우저 정책 때문에 PDF.js 로딩이 막히면 자동으로 Drive 임베드 뷰어로 전환됩니다.'
     ]
   },
   en: {
-    appTitle: 'Easy book',
     urlLabel: 'URL',
     urlPlaceholder: 'Google Drive share link or direct PDF URL',
     pagePlaceholder: 'Page',
+    pageGo: 'Go to page',
     loadBtn: 'Load',
-    landTitle: 'Read PDF like<br>a real book with Easy book',
-    landDesc: 'Select a PDF file or drag and drop it here.<br>You can switch single/double view anytime.',
-    landUrlHint: 'Or paste a Google Drive share link into the URL field',
+    landTitle: 'Read PDFs like<br>a real book with Easy book',
+    landDesc: 'Select a PDF file or drag and drop it here.<br>Grab a page corner and the paper curls as it turns.',
+    landUrlHint: 'Or paste a Google Drive share link into the URL field above',
+    chipFlip: 'Real paper page turns',
+    chipSpread: 'Two-page spread · hard cover',
+    chipPrivate: 'Processed in your browser',
     fileSelect: 'Select PDF file',
     helpTitle: 'How to use Easy book',
     helpClose: 'Close',
     footer: 'Created by. Educational Musical Dreaming Teacher Chisu',
     privacyNote: 'Privacy notice: File and URL data are processed only in your browser and are never stored on the Easy book server.',
-    kbh: 'Navigate with ← → keys',
-    projectMenuAria: 'Project actions',
     projectSave: 'Save project',
     projectLoad: 'Load project',
-    langMenuAria: 'Select language',
     fileOpen: 'Open file',
-    projectTitle: 'Project save/load',
-    shareTitle: 'Create share link',
+    shareTitle: 'Copy share link',
     fullscreenTitle: 'Fullscreen',
+    fullscreenExit: 'Exit fullscreen',
     themeTitle: 'Dark/Light mode',
     langTitle: 'Language',
     helpTitleBtn: 'Help',
     firstPage: 'First page',
     lastPage: 'Last page',
     fitScreen: 'Fit to screen',
+    zoomIn: 'Zoom in',
+    zoomOut: 'Zoom out',
     resetTitle: 'Reset',
     moreTitle: 'More',
     viewToggleTitle: 'Toggle single/double view',
+    prevPage: 'Previous page',
+    nextPage: 'Next page',
+    scrubAria: 'Browse pages',
+    soundLabel: 'Page-turn sound',
+    on: 'On', off: 'Off',
+    embedHint: 'Embedded mode · navigation is handled by the Google viewer',
+    dropHere: 'Drop a PDF or .ebook file here',
+    cover: 'Cover', back: 'Back cover',
+    pages: (a, b) => `pp. ${a}–${b}`,
+    page: a => `p. ${a}`,
+    needPdf: 'Please open a PDF first.',
+    pageRange: n => `Enter a page between 1 and ${n}.`,
+    fsFail: 'Could not switch to fullscreen: ',
+    fsUnsupported: 'Your browser does not support it.',
+    loading: 'Loading…',
+    rendering: 'Rendering PDF…',
+    reading: 'Reading file…',
+    readFail: 'Failed to read the file',
+    pdfOnly: 'Only PDF files are supported.',
+    openFail: 'Failed to open PDF: ',
+    opened: n => `${n} pages · drag a corner or click to turn`,
+    resumed: p => `Resuming from page ${p}, where you left off.`,
+    noSave: 'Nothing to save. Open a PDF first.',
+    saved: 'Saved as a project (.ebook) file.',
+    projLoading: 'Loading project file…',
+    projLoaded: 'Project loaded.',
+    projFail: 'Failed to load project: ',
+    projUnsupported: 'Unsupported project file.',
+    driveChecking: 'Checking the file on Google Drive…\n(Sharing: anyone with the link)',
+    downloading: 'Downloading PDF…',
+    proxy403: 'Proxy 403: add this app\'s domain to ALLOWED_ORIGINS in the Worker.\ne.g. https://easybook.chichiboo.link or your local dev address',
+    driveFail: 'Could not load the Google Drive link\n① Set sharing to "Anyone with the link"\n② Make sure it is a PDF file\n③ If it still fails, upload the file instead',
+    notPdf: 'The response is not a PDF. Check that it is a direct PDF link accessible without login.',
+    urlFail: 'Failed to load URL: ',
+    corsHint: 'Check the server CORS settings.',
+    embedSwitched: 'PDF.js was blocked by browser policy, so the embedded viewer is used instead.',
+    embedLabel: 'Google Drive embedded view',
+    shareOnlyUrl: 'Share links are available only for PDFs opened from a URL.',
+    shareCopied: 'Share link copied. It opens at the current page.',
+    clipFail: 'Could not copy to clipboard. Please copy the link manually:\n',
+    resetDone: 'The open PDF has been cleared.',
+    narrowSingle: 'The screen is narrow, so pages are shown one at a time.',
     helpItems: [
-      '<b>Open file</b>: Use the top <b>Open file</b> button, or drag & drop a PDF.',
+      '<b>Open file</b>: Use the <b>Open file</b> button or drag & drop a PDF (or an .ebook project).',
       '<b>Open URL</b>: Enter a Google Drive share link or direct PDF URL and click <b>Load</b>.',
-      '<b>View mode</b>: Switch between <b>Single</b>/<b>Double</b> view. Cover and back cover are always single-page.',
-      '<b>Navigation</b>: Use arrow buttons or keyboard <b>← →</b> keys.',
-      '<b>Share link</b>: For URL-loaded files, copy a shareable eBook link with <b>Share</b>.',
-      '<b>Privacy</b>: Files are processed only in your browser and are never stored on the Easy book server, so you can use it with confidence.',
-      '<b>If Drive fails</b>: If PDF.js loading is blocked by browser policy, it automatically switches to Drive embedded viewer.'
+      '<b>Turning pages</b>: <b>Grab a page corner and drag</b> — the paper curls as it turns. Hovering a corner lifts it slightly. Click, swipe or <kbd>←</kbd> <kbd>→</kbd> <kbd>Space</kbd> also work.',
+      '<b>Jump</b>: Use the slider at the bottom or the page box at the top. <kbd>Home</kbd> <kbd>End</kbd> go to the first/last page.',
+      '<b>View mode</b>: Switch <b>Single</b>/<b>Double</b> view. Covers are shown alone like a hardcover.',
+      '<b>Select text</b>: Drag over text to select it and copy with <kbd>Ctrl</kbd>+<kbd>C</kbd>. On mobile, long-press the text. (Drag a corner or margin to turn the page.)',
+      '<b>Zoom</b>: Toolbar buttons, <kbd>Ctrl</kbd>+wheel or pinch. Drag to pan while zoomed; click the % to fit again.',
+      '<b>Page-turn sound</b>: Toggle it from the More (⋮) menu.',
+      '<b>Resume</b>: Reopening the same PDF continues from the last page you read.',
+      '<b>Share link</b>: For URL-loaded files, <b>Copy share link</b> includes the current page.',
+      '<b>Privacy</b>: Files are processed only in your browser and are never stored on the Easy book server.',
+      '<b>If Drive fails</b>: If PDF.js is blocked by browser policy, the Drive embedded viewer is used automatically.'
     ]
   },
   ja: {
-    appTitle: 'Easy book',
     urlLabel: 'URL',
     urlPlaceholder: 'Google Drive共有リンクまたはPDF直接URL',
     pagePlaceholder: 'ページ',
+    pageGo: 'ページへ移動',
     loadBtn: '読み込み',
     landTitle: 'Easy bookで<br>PDFを本のように読む',
-    landDesc: 'PDFファイルを選択するか、ここにドラッグ＆ドロップしてください。<br>単ページ/見開きはいつでも切り替えできます。',
-    landUrlHint: 'またはURL入力欄にGoogle Drive共有リンクを貼り付けてください',
+    landDesc: 'PDFファイルを選択するか、ここにドラッグ＆ドロップしてください。<br>ページの角をつまんで引くと、紙がしなってめくれます。',
+    landUrlHint: 'または上のURL入力欄にGoogle Drive共有リンクを貼り付けてください',
+    chipFlip: '本物の紙のようにめくる',
+    chipSpread: '見開き・ハードカバー',
+    chipPrivate: 'ブラウザ内だけで処理',
     fileSelect: 'PDFファイルを選択',
     helpTitle: 'Easy bookの使い方',
     helpClose: '閉じる',
     footer: 'Created by. 教育ミュージカル 夢見るチス先生',
     privacyNote: 'プライバシー案内：ファイルとURLデータはブラウザ内でのみ処理され、Easy bookサーバーには保存されません。',
-    kbh: '← → キーで移動',
-    projectMenuAria: 'プロジェクト操作',
     projectSave: 'プロジェクト保存',
     projectLoad: 'プロジェクト読込',
-    langMenuAria: '言語選択',
     fileOpen: 'ファイルを開く',
-    projectTitle: 'プロジェクト保存/読込',
-    shareTitle: '共有リンク作成',
+    shareTitle: '共有リンクをコピー',
     fullscreenTitle: '全画面',
+    fullscreenExit: '全画面を終了',
     themeTitle: 'ダーク/ライトモード',
     langTitle: '言語',
     helpTitleBtn: '使い方',
     firstPage: '最初のページ',
     lastPage: '最後のページ',
     fitScreen: '画面に合わせる',
+    zoomIn: '拡大',
+    zoomOut: '縮小',
     resetTitle: '初期化',
     moreTitle: 'その他',
     viewToggleTitle: '単ページ/見開き切替',
+    prevPage: '前のページ',
+    nextPage: '次のページ',
+    scrubAria: 'ページ移動',
+    soundLabel: 'めくる音',
+    on: 'オン', off: 'オフ',
+    embedHint: '埋め込みモード · ページ移動はGoogleビューアーで操作します',
+    dropHere: 'PDFまたは.ebookファイルをここにドロップ',
+    cover: '表紙', back: '裏表紙',
+    pages: (a, b) => `${a}–${b}ページ`,
+    page: a => `${a}ページ`,
+    needPdf: '先にPDFを開いてください。',
+    pageRange: n => `1〜${n}のページを入力してください。`,
+    fsFail: '全画面に切り替えできません: ',
+    fsUnsupported: 'ブラウザが対応していません。',
+    loading: '読み込み中…',
+    rendering: 'PDFを描画中…',
+    reading: 'ファイルを読み込み中…',
+    readFail: 'ファイルの読み込みに失敗しました',
+    pdfOnly: 'PDFファイルのみ対応しています。',
+    openFail: 'PDFを開けません: ',
+    opened: n => `全${n}ページ · 角をドラッグまたはクリックでめくれます`,
+    resumed: p => `前回読んでいた${p}ページから開きます。`,
+    noSave: '保存するPDFがありません。先にPDFを開いてください。',
+    saved: 'プロジェクト(.ebook)ファイルとして保存しました。',
+    projLoading: 'プロジェクトファイルを読み込み中…',
+    projLoaded: 'プロジェクトを読み込みました。',
+    projFail: 'プロジェクトの読み込みに失敗: ',
+    projUnsupported: '対応していないプロジェクトファイルです。',
+    driveChecking: 'Google Driveのファイルを確認中…\n(共有設定: リンクを知っている全員)',
+    downloading: 'PDFをダウンロード中…',
+    proxy403: 'プロキシ403エラー: WorkerのALLOWED_ORIGINSに現在のアプリのドメインを追加してください。',
+    driveFail: 'Google Driveリンクを読み込めません\n① 共有を「リンクを知っている全員」に設定\n② PDFファイルか確認\n③ 解決しない場合はファイルをアップロード',
+    notPdf: '応答がPDFではありません。ログインなしで開けるPDFの直接リンクか確認してください。',
+    urlFail: 'URLの読み込みに失敗: ',
+    corsHint: 'サーバーのCORS設定を確認してください。',
+    embedSwitched: 'ブラウザのポリシーでPDF.jsがブロックされたため、埋め込みビューアーに切り替えました。',
+    embedLabel: 'Google Drive埋め込み表示',
+    shareOnlyUrl: '共有リンクはURLから開いたPDFでのみ作成できます。',
+    shareCopied: '共有リンクをコピーしました。現在のページで開きます。',
+    clipFail: 'コピーできませんでした。手動でコピーしてください:\n',
+    resetDone: '開いていたPDFを初期化しました。',
+    narrowSingle: '画面が狭いため単ページで表示します。',
     helpItems: [
-      '<b>ファイルを開く</b>: 上部の<b>ファイルを開く</b>ボタン、またはドラッグ＆ドロップでPDFを読み込みます。',
+      '<b>ファイルを開く</b>: <b>ファイルを開く</b>ボタンまたはドラッグ＆ドロップでPDF(.ebookプロジェクトも可)を開きます。',
       '<b>URLを開く</b>: Google Drive共有リンクまたはPDF URLを入力して<b>読み込み</b>を押します。',
-      '<b>表示モード</b>: <b>単ページ</b>/<b>見開き</b>を切り替えできます。表紙と裏表紙は常に単ページです。',
-      '<b>ページ移動</b>: 左右矢印ボタンまたはキーボード<b>← →</b>で移動できます。',
-      '<b>共有リンク</b>: URLから開いた文書は<b>共有</b>ボタンでリンクをコピーできます。',
-      '<b>プライバシー</b>: ファイルはブラウザ内でのみ処理され、Easy bookサーバーには一切保存されないため安心して利用できます。',
-      '<b>Drive読み込み失敗時</b>: ブラウザポリシーでPDF.jsがブロックされる場合、自動でDrive埋め込みビューアーに切り替えます。'
+      '<b>ページをめくる</b>: ページの<b>角をつまんでドラッグ</b>すると紙がしなってめくれます。角にマウスを乗せると少し持ち上がります。クリック・スワイプ・<kbd>←</kbd> <kbd>→</kbd> <kbd>Space</kbd>も使えます。',
+      '<b>すばやく移動</b>: 下部のスライダーや上部のページ入力で一気にめくれます。<kbd>Home</kbd> <kbd>End</kbd>で最初・最後へ。',
+      '<b>表示モード</b>: <b>単ページ</b>/<b>見開き</b>を切り替えできます。表紙と裏表紙はハードカバーのように単独で表示されます。',
+      '<b>文字選択</b>: 文字の上をドラッグすると選択でき、<kbd>Ctrl</kbd>+<kbd>C</kbd>でコピーできます。モバイルは文字を長押しします。(角や余白をドラッグするとページがめくれます)',
+      '<b>拡大/縮小</b>: ボタン、<kbd>Ctrl</kbd>+ホイール、ピンチ操作。拡大中はドラッグで移動、%を押すと画面に合わせます。',
+      '<b>めくる音</b>: その他(⋮)メニューでオン/オフできます。',
+      '<b>続きから</b>: 同じPDFを開き直すと、前回のページから表示します。',
+      '<b>共有リンク</b>: URLから開いた文書は<b>共有リンクをコピー</b>で現在のページ付きリンクを共有できます。',
+      '<b>プライバシー</b>: ファイルはブラウザ内でのみ処理され、Easy bookサーバーには保存されません。',
+      '<b>Drive読み込み失敗時</b>: ブラウザのポリシーでPDF.jsがブロックされると、自動でDrive埋め込みビューアーに切り替えます。'
     ]
   }
 };
 
-function setButtonTextAndA11y(el, text) {
-  el.title = text;
-  el.setAttribute('aria-label', text);
+function t(key, ...args) {
+  const dict = I18N[currentLang] || I18N.ko;
+  const v = dict[key] !== undefined ? dict[key] : I18N.ko[key];
+  return typeof v === 'function' ? v(...args) : (v ?? key);
 }
 
 function applyLanguage(lang) {
-  const safeLang = I18N[lang] ? lang : 'ko';
-  currentLang = safeLang;
-  localStorage.setItem('easybook-lang', safeLang);
-  document.documentElement.lang = safeLang;
-  const t = I18N[safeLang];
-  appTitle.textContent = t.appTitle;
-  urlLabel.textContent = t.urlLabel;
-  uiEl.placeholder = t.urlPlaceholder;
-  pageInput.placeholder = t.pagePlaceholder;
-  loadUrlBtn.textContent = t.loadBtn;
-  landTitle.innerHTML = t.landTitle;
-  landDesc.innerHTML = t.landDesc;
-  landUrlHint.textContent = t.landUrlHint;
-  fileLabelBig.textContent = t.fileSelect;
-  helpTitle.textContent = t.helpTitle;
-  helpCloseBtn.textContent = t.helpClose;
-  footerLink.textContent = t.footer;
-  privacyNote.textContent = t.privacyNote;
-  kbh.textContent = t.kbh;
-  moreMenu.setAttribute('aria-label', t.moreTitle);
-  projectSaveAction.textContent = t.projectSave;
-  projectLoadAction.textContent = t.projectLoad;
-  shareAction.textContent = t.shareTitle;
-  firstAction.textContent = t.firstPage;
-  lastAction.textContent = t.lastPage;
-  fitAction.textContent = t.fitScreen;
-  langLabel.textContent = t.langTitle;
-  resetAction.textContent = t.resetTitle;
-  helpAction.textContent = t.helpTitleBtn;
-  helpList.innerHTML = t.helpItems.map(item => `<li>${item}</li>`).join('');
-  setButtonTextAndA11y(document.getElementById('file-label'), t.fileOpen);
-  setButtonTextAndA11y(moreBtn, t.moreTitle);
-  setButtonTextAndA11y(viewToggleBtn, t.viewToggleTitle);
-  const fsTxt = document.fullscreenElement ? `${t.fullscreenTitle} 종료` : t.fullscreenTitle;
-  setButtonTextAndA11y(fullscreenBtn, fsTxt);
-  setButtonTextAndA11y(themeBtn, t.themeTitle);
-  // 현재 언어 표시
-  [['ko',langKoBtn],['en',langEnBtn],['ja',langJaBtn]].forEach(([code, el]) => {
-    el.classList.toggle('active', code === safeLang);
+  currentLang = I18N[lang] ? lang : 'ko';
+  store.set('easybook-lang', currentLang);
+  document.documentElement.lang = currentLang;
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    el.title = t(el.dataset.i18nTitle);
+    el.setAttribute('aria-label', t(el.dataset.i18nTitle));
   });
+  helpList.innerHTML = t('helpItems').map(item => `<li>${item}</li>`).join('');
+  mainEl.dataset.drop = t('dropHere');
+  moreMenu.setAttribute('aria-label', t('moreTitle'));
+  [['ko', 'lang-ko'], ['en', 'lang-en'], ['ja', 'lang-ja']].forEach(([code, id]) => {
+    $(id).classList.toggle('active', code === currentLang);
+    $(id).setAttribute('aria-checked', String(code === currentLang));
+  });
+  updateFullscreenUI();
+  updateSoundUI();
+  if (screenMode === 'embed') pi.textContent = t('embedLabel');
+  if (pf) updateChrome();
 }
 
-function refreshViewerLayout(delay = 0) {
-  clearTimeout(layoutRefreshTimer);
-  layoutRefreshTimer = setTimeout(() => {
-    requestAnimationFrame(() => {
-      if (pdfDoc && vwr.style.display === 'flex') {
-        recalcBaseScale().then(() => renderSpread(curSpread));
+/* ================= 화면 전환 ================= */
+function setScreen(mode) {
+  screenMode = mode;
+  land.style.display = mode === 'land' ? 'flex' : 'none';
+  embedWrap.style.display = mode === 'embed' ? 'block' : 'none';
+  document.body.classList.toggle('reading', mode === 'pdf');
+  if (mode !== 'embed') { embedFrame.src = 'about:blank'; }
+}
+
+/* ================= 책 구성 ================= */
+// (구버전 호환) 펼침 목록 — 예전 공유 링크(s=)·프로젝트 파일의 spread 값을 쪽 번호로 바꿀 때 사용
+function buildSpreads(n, mode = 'double') {
+  const s = [];
+  if (n < 1) return s;
+  if (mode === 'single') {
+    for (let p = 1; p <= n; p++) s.push({ pages: [p] });
+    return s;
+  }
+  s.push({ pages: [1] });
+  if (n === 1) return s;
+  for (let i = 2; i <= n - 1; i += 2) s.push({ pages: i + 1 <= n - 1 ? [i, i + 1] : [i] });
+  s.push({ pages: [n] });
+  return s;
+}
+
+// 두쪽 보기: 표지는 단독(오른쪽), 뒷표지도 단독(왼쪽)이 되도록
+// 쪽 수가 홀수면 뒷표지 앞에 빈 면지를 하나 끼운다 — 실제 제본과 같은 방식.
+function buildPageMap(landscape) {
+  const m = [];
+  for (let p = 1; p <= total; p++) m.push(p);
+  if (landscape && total >= 3 && total % 2 === 1) m.splice(total - 1, 0, 0);
+  return m;
+}
+
+function spreadStart(i) {
+  return (layout.landscape && i > 0 && i % 2 === 0) ? i - 1 : i;
+}
+
+function visibleIdx(idx) {
+  const n = pageEls.length;
+  if (!n) return [];
+  if (!layout.landscape) return [idx];
+  const s = spreadStart(idx);
+  if (s === 0 || s === n - 1) return [s];
+  return s + 1 < n ? [s, s + 1] : [s];
+}
+
+function visiblePdfPages(idx = curIdx) {
+  return visibleIdx(idx).map(i => pageMap[i]).filter(Boolean);
+}
+
+function currentPdfPage() {
+  return visiblePdfPages()[0] || 1;
+}
+
+function idxOfPdfPage(p) {
+  const n = Math.max(1, Math.min(total, Math.round(p) || 1));
+  const i = pageMap.indexOf(n);
+  return i < 0 ? 0 : i;
+}
+
+function spreadLabel(idx = curIdx) {
+  const vis = visibleIdx(idx);
+  const pages = vis.map(i => pageMap[i]).filter(Boolean);
+  if (!pages.length) return '';
+  if (total > 1 && vis.length === 1 && vis[0] === 0) return t('cover');
+  if (total > 1 && vis.length === 1 && vis[0] === pageEls.length - 1) return t('back');
+  return pages.length === 2 ? t('pages', pages[0], pages[1]) : t('page', pages[0]);
+}
+
+async function computeLayout() {
+  const cs = getComputedStyle(vwr);
+  const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+  const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+  const narrow = vwr.clientWidth < 760;
+  const landscape = viewMode === 'double' && !narrow && total > 1;
+  const edgeRoom = 24; // 종이 단면이 들어갈 여유
+  const availW = Math.max(120, vwr.clientWidth - padX - edgeRoom);
+  const availH = Math.max(160, vwr.clientHeight - padY);
+  const cols = landscape ? 2 : 1;
+  const fit = Math.min(availW / cols / firstPageVp.width, availH / firstPageVp.height);
+  return {
+    pw: Math.max(60, Math.floor(firstPageVp.width * fit * zoomF)),
+    ph: Math.max(80, Math.floor(firstPageVp.height * fit * zoomF)),
+    landscape,
+    narrow
+  };
+}
+
+function createPageEl(i, map) {
+  const p = map[i];
+  const last = map.length - 1;
+  const el = document.createElement('div');
+  el.className = 'pf-page' + (p ? '' : ' blank');
+  const isCover = map.length > 1 && (i === 0 || i === last);
+  if (isCover) el.dataset.density = 'hard';
+  const ph = document.createElement('div');
+  ph.className = 'pf-ph';
+  ph.textContent = p || '';
+  const grain = document.createElement('div');
+  grain.className = 'pf-grain';
+  const shade = document.createElement('div');
+  shade.className = 'pf-shade';
+  el.append(ph, grain, shade);
+  if (p && !isCover) {
+    const num = document.createElement('span');
+    num.className = 'pf-num';
+    num.textContent = p;
+    el.appendChild(num);
+  }
+  return el;
+}
+
+function copyPageCanvas(srcEl, dstEl) {
+  const s = srcEl.querySelector('canvas.pf-canvas');
+  const d = dstEl.querySelector('canvas.pf-canvas');
+  if (!s || !d || !s.width) return;
+  d.width = s.width; d.height = s.height;
+  d.getContext('2d').drawImage(s, 0, 0);
+}
+
+// StPageFlip 은 destroy() 후에도 requestAnimationFrame 루프를 멈추지 않는다.
+// 생성 시 루프 콜백을 붙잡아 두었다가, 폐기할 때 그 콜백의 다음 예약을 막아 루프를 끝낸다.
+const nativeRaf = window.requestAnimationFrame.bind(window);
+const deadLoops = new WeakSet();
+let capturedLoops = null;
+window.requestAnimationFrame = function (cb) {
+  if (capturedLoops) capturedLoops.push(cb);
+  if (deadLoops.has(cb)) return 0;
+  return nativeRaf(cb);
+};
+
+// StPageFlip 2.0.7 보완 패치
+function patchPageFlip(inst) {
+  const render = inst.getRender();
+  // 1) 매 프레임 모든 페이지에 style 을 다시 쓰는 대신, 보이던 페이지만 숨긴다 (쪽 수가 많은 PDF 성능)
+  render.clear = function () {
+    for (const page of this.app.getPageCollection().getPages()) {
+      if (page !== this.leftPage && page !== this.rightPage &&
+          page !== this.flippingPage && page !== this.bottomPage) {
+        const el = page.getElement();
+        if (el.style.display !== 'none') el.style.cssText = 'display: none';
       }
-    });
-  }, delay);
+      if (page.getTemporaryCopy() !== this.flippingPage) page.hideTemporaryCopy();
+    }
+  };
+  // 2) 빠르게 밀고 잠시 멈췄다 손을 떼면 라이브러리가 '끝 지점 탭'으로 보고
+  //    반대 방향으로 넘길 수 있다 → 손가락이 움직인 방향으로 넘기도록 보정
+  const origStop = inst.userStop;
+  inst.userStop = function (pos, isSwipe = false) {
+    const start = this.mousePosition;
+    if (!isSwipe && this.isUserTouch && !this.isUserMove && start) {
+      const dx = pos.x - start.x, dy = pos.y - start.y;
+      if (Math.abs(dx) > 20 && Math.abs(dx) > Math.abs(dy)) {
+        this.isUserTouch = false;
+        const corner = start.y < this.getRender().getRect().height / 2 ? 'top' : 'bottom';
+        if (dx < 0) this.flipNext(corner); else this.flipPrev(corner);
+        return;
+      }
+    }
+    return origStop.call(this, pos, isSwipe);
+  };
+  // 3) 한쪽 보기에서 넘길 때 만드는 임시 복제본은 cloneNode 라 canvas 내용이 비어 있다 → 픽셀 복사
+  for (const page of inst.getPageCollection().getPages()) {
+    const orig = page.newTemporaryCopy;
+    page.newTemporaryCopy = function () {
+      const had = this.getTemporaryCopy();
+      const copy = orig.call(this);
+      if (copy && copy !== this && copy !== had) copyPageCanvas(this.getElement(), copy.getElement());
+      return copy;
+    };
+  }
 }
 
-function showPDFViewer() {
-  embedWrap.style.display = 'none';
-  vwr.style.display = 'flex';
-  centerViewer();
+function destroyInstance(entry) {
+  const { inst, host, els, loops } = entry;
+  (loops || []).forEach(fn => deadLoops.add(fn));
+  try {
+    // 라이브러리의 requestAnimationFrame 루프·resize 핸들러가 계속 돌지 않도록 무력화
+    inst.getRender().render = () => {};
+    inst.getUI().update = () => {};
+    inst.destroy();
+  } catch {}
+  host.remove();
+  els.forEach(releasePage);
 }
 
-async function recalcBaseScale() {
+async function buildBook(targetPdfPage = 1, opts = {}) {
   if (!pdfDoc) return;
-  const pg0 = await pdfDoc.getPage(1);
-  const vp0 = pg0.getViewport({ scale: 1 });
-  const mainEl = document.getElementById('main');
-  const style = getComputedStyle(vwr);
-  const padX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
-  const padY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
-  const availW = mainEl.clientWidth - padX;
-  const availH = mainEl.clientHeight - padY;
-  const narrow = mainEl.clientWidth < 760;
-  const effectiveW = availW * (viewMode === 'double' && !narrow ? 0.48 : 0.92);
-  baseScale = Math.min(availH / vp0.height, effectiveW / vp0.width);
+  const doc = pdfDoc;
+  const L = await computeLayout();
+  if (doc !== pdfDoc) return;
+  if (pf && !opts.force && L.pw === layout.pw && L.ph === layout.ph && L.landscape === layout.landscape) return;
+
+  const gen = ++bookGen;
+  if (pf) retired.push(currentEntry());
+
+  layout = L;
+  const map = buildPageMap(L.landscape);
+  const els = map.map((_, i) => createPageEl(i, map));
+  const W = L.landscape ? L.pw * 2 : L.pw;
+
+  shiftEl.classList.add('no-anim');
+  stage.style.width = W + 'px';
+  stage.style.height = L.ph + 'px';
+
+  const host = document.createElement('div');
+  host.className = 'flipbook';
+  host.style.width = W + 'px';
+  host.style.height = L.ph + 'px';
+  host.style.visibility = 'hidden';
+  shiftEl.appendChild(host);
+
+  pageMap = map;
+  pageEls = els;
+  const startIdx = idxOfPdfPage(targetPdfPage);
+
+  const inst = new St.PageFlip(host, {
+    width: L.pw,
+    height: L.ph,
+    size: 'fixed',
+    autoSize: false,
+    usePortrait: true,          // host 폭이 한 쪽 너비면 한쪽 보기
+    showCover: true,            // 표지·뒷표지 단독 + 하드커버
+    drawShadow: true,
+    maxShadowOpacity: .5,
+    flippingTime: 850,
+    startPage: startIdx,
+    swipeDistance: 30,
+    showPageCorners: true,      // 모서리에 올리면 살짝 들춰짐
+    mobileScrollSupport: true,
+    clickEventForward: true,
+    useMouseEvents: true
+  });
+  capturedLoops = [];
+  try { inst.loadFromHTML(els); } finally { bookLoops = capturedLoops; capturedLoops = null; }
+  patchPageFlip(inst);
+
+  pf = inst;
+  bookHost = host;
+  curIdx = inst.getCurrentPageIndex();
+
+  inst.on('flip', e => {
+    if (inst !== pf) return;
+    onIndexChange(e.data);
+  });
+  inst.on('changeState', e => {
+    if (inst !== pf) return;
+    if (e.data === 'flipping') playFlipSound();
+  });
+
+  updateChrome();
+  scheduleRenders();
+  await waitForPages(visibleIdx(curIdx), 2500);
+  if (gen !== bookGen) return;
+
+  host.style.visibility = '';
+  retired.splice(0).forEach(destroyInstance);
+  requestAnimationFrame(() => shiftEl.classList.remove('no-anim'));
+  vwr.classList.toggle('pan', zoomF > 1.001);
+  centerViewer();
 }
 
 function centerViewer() {
   requestAnimationFrame(() => {
-    if (vwr.style.display !== 'flex') return;
+    if (screenMode !== 'pdf') return;
     vwr.scrollLeft = Math.max(0, (vwr.scrollWidth - vwr.clientWidth) / 2);
-    if (zoomF <= 1) vwr.scrollTop = 0;
+    vwr.scrollTop = Math.max(0, (vwr.scrollHeight - vwr.clientHeight) / 2);
   });
 }
 
-function showEmbedViewer(src) {
-  vwr.style.display = 'none';
-  embedFrame.src = src;
-  embedWrap.style.display = 'block';
-  land.style.display = 'none';
+function bookSelection() {
+  const sel = window.getSelection && window.getSelection();
+  if (!sel || sel.isCollapsed || !sel.anchorNode || !bookHost) return null;
+  return bookHost.contains(sel.anchorNode) ? sel : null;
 }
 
-function buildSpreads(n, mode = 'double') {
-  const s = [];
-  if (n < 1) return s;
-
-  if (mode === 'single') {
-    for (let p = 1; p <= n; p++) {
-      const type = p === 1 ? 'cover' : p === n ? 'back' : 'single';
-      s.push({ type, pages:[p] });
-    }
-    return s;
-  }
-
-  s.push({ type:'cover', pages:[1] });
-  if (n === 1) return s;
-  const body = [];
-  for (let i = 2; i <= n - 1; i++) body.push(i);
-  for (let i = 0; i < body.length; i += 2) {
-    const p = [body[i]];
-    if (i + 1 < body.length) p.push(body[i + 1]);
-    s.push({ type: p.length === 2 ? 'spread' : 'half', pages: p });
-  }
-  s.push({ type:'back', pages:[n] });
-  return s;
+function onIndexChange(idx) {
+  curIdx = idx;
+  const sel = bookSelection();
+  if (sel) sel.removeAllRanges(); // 넘어간 쪽의 선택은 지운다
+  updateChrome();
+  scheduleRenders();
+  savePosition();
 }
 
-async function renderPage(canvas, textLayer, num) {
-  if (!num || num < 1 || num > total) {
-    canvas.width = 0; canvas.height = 0;
-    canvas.style.width = '0px'; canvas.style.height = '0px';
-    textLayer.innerHTML = '';
-    textLayer.style.width = '0px';
-    textLayer.style.height = '0px';
-    return;
+// 책을 실제처럼 놓기: 덮인 표지/뒷표지는 가운데로, 펼치면 양쪽으로
+function shiftFor(idx) {
+  if (!layout.landscape) return 0;
+  const vis = visibleIdx(idx);
+  if (vis.length === 2) return 0;
+  return vis[0] === 0 ? -layout.pw / 2 : layout.pw / 2;
+}
+function applyShift(idx) {
+  const shift = shiftFor(idx);
+  shiftEl.style.transform = shift ? `translateX(${shift}px)` : '';
+}
+
+function updateChrome() {
+  if (!pf || !pageEls.length) return;
+  const n = pageEls.length;
+  const vis = visibleIdx(curIdx);
+  pb.disabled = vis[0] === 0;
+  nb.disabled = vis[vis.length - 1] >= n - 1;
+
+  const label = spreadLabel();
+  const p = currentPdfPage();
+  pi.textContent = label;
+  if (document.activeElement !== pageInput) pageInput.value = p;
+  pageTotal.textContent = `/ ${total}`;
+  scrub.max = String(total);
+  scrub.disabled = total < 2;
+  if (!scrubbing) scrub.value = String(p);
+  scrubLabel.textContent = scrubbing ? t('page', scrub.value) : label;
+
+  const { pw, landscape } = layout;
+  let leftOn = false, rightOn = true;
+  if (landscape) {
+    if (vis.length === 2) leftOn = true;
+    else if (vis[0] !== 0) { leftOn = true; rightOn = false; }
   }
-  const dpr = window.devicePixelRatio || 1;
-  const pg = await pdfDoc.getPage(num);
-  const vpLogical = pg.getViewport({ scale: baseScale * zoomF });
-  const vp = pg.getViewport({ scale: baseScale * zoomF * dpr });
-  canvas.width = vp.width;
-  canvas.height = vp.height;
-  canvas.style.width = vpLogical.width + 'px';
-  canvas.style.height = vpLogical.height + 'px';
-  await pg.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+  applyShift(curIdx);
+  const W = landscape ? pw * 2 : pw;
+  bookShadow.style.left = (landscape && !leftOn ? pw : 0) + 'px';
+  bookShadow.style.width = (landscape && leftOn && rightOn ? W : pw) + 'px';
+
+  // 종이 단면 두께 — 읽은 만큼 왼쪽이 두꺼워지고 오른쪽이 얇아진다
+  const frac = n > 1 ? vis[vis.length - 1] / (n - 1) : 0;
+  const maxT = Math.max(3, Math.min(14, Math.round(total / 8)));
+  const lt = leftOn ? Math.max(1.5, maxT * frac) : 0;
+  const rt = rightOn ? Math.max(1.5, maxT * (1 - frac)) : 0;
+  edgeL.style.width = lt + 'px';
+  edgeL.style.left = (-lt) + 'px';
+  edgeR.style.width = rt + 'px';
+  edgeR.style.left = W + 'px';
+}
+
+/* ================= 페이지 렌더링 (지연 로딩) ================= */
+const RENDER_AHEAD = 6;   // 미리 그려 둘 범위
+const KEEP_RANGE = 14;    // 이보다 멀어진 페이지는 메모리 해제
+let wantList = [];
+let workerBusy = false;
+const renderWaiters = new Set();
+
+function releasePage(el) {
+  const c = el.querySelector('canvas.pf-canvas');
+  if (c) { c.width = 0; c.height = 0; c.remove(); }
+  const tl = el.querySelector('.pf-text');
+  if (tl) tl.remove();
+  el._done = false;
+  el.classList.remove('ready');
+}
+
+function scheduleRenders() {
+  const n = pageEls.length;
+  if (!n) return;
+  const vis = visibleIdx(curIdx);
+  const lo = vis[0], hi = vis[vis.length - 1];
+  const order = [...vis];
+  for (let d = 1; d <= RENDER_AHEAD; d++) {
+    if (hi + d < n) order.push(hi + d);
+    if (d <= RENDER_AHEAD - 2 && lo - d >= 0) order.push(lo - d);
+  }
+  wantList = order;
+  pageEls.forEach((el, i) => {
+    if (el._done && Math.abs(i - curIdx) > KEEP_RANGE) releasePage(el);
+  });
+  kickRenderer();
+}
+
+function prioritize(indices) {
+  wantList = [...indices, ...wantList.filter(i => !indices.includes(i))];
+  kickRenderer();
+}
+
+async function kickRenderer() {
+  if (workerBusy) return;
+  workerBusy = true;
   try {
-    const textContent = await pg.getTextContent();
-    textLayer.innerHTML = '';
-    textLayer.style.width = `${vpLogical.width}px`;
-    textLayer.style.height = `${vpLogical.height}px`;
+    while (true) {
+      const els = pageEls;
+      const i = wantList.find(k => els[k] && !els[k]._done);
+      if (i === undefined) break;
+      await renderPageEl(i, bookGen);
+      renderWaiters.forEach(fn => fn());
+    }
+  } finally {
+    workerBusy = false;
+  }
+}
+
+function waitForPages(indices, timeout) {
+  const els = indices.map(i => pageEls[i]).filter(Boolean);
+  return new Promise(resolve => {
+    const ready = () => els.every(el => el._done);
+    if (ready()) return resolve();
+    const finish = () => { clearTimeout(timer); renderWaiters.delete(check); resolve(); };
+    const check = () => { if (ready()) finish(); };
+    const timer = setTimeout(finish, timeout);
+    renderWaiters.add(check);
+  });
+}
+
+async function renderTextLayer(el, canvas, page, scale, gen) {
+  try {
+    const textContent = await page.getTextContent();
+    if (gen !== bookGen || !textContent.items.length) return;
+    const layer = document.createElement('div');
+    layer.className = 'pf-text';
+    layer.style.cssText = `left:${canvas.style.left};top:${canvas.style.top};width:${canvas.style.width};height:${canvas.style.height};`;
     await pdfjsLib.renderTextLayer({
       textContent,
-      container: textLayer,
-      viewport: vpLogical,
+      container: layer,
+      viewport: page.getViewport({ scale }),
       textDivs: []
     }).promise;
-  } catch {
-    textLayer.innerHTML = '';
+    // 그사이 페이지가 해제·교체됐으면 버린다
+    if (gen !== bookGen || !el._done || canvas.parentNode !== el) return;
+    el.appendChild(layer);
+  } catch {}
+}
+
+async function renderPageEl(i, gen) {
+  const el = pageEls[i];
+  const p = pageMap[i];
+  const doc = pdfDoc;
+  if (!el || el._done) return;
+  if (!p) { el._done = true; return; }
+  const { pw, ph } = layout;
+  try {
+    const page = await doc.getPage(p);
+    const v1 = page.getViewport({ scale: 1 });
+    const s = Math.min(pw / v1.width, ph / v1.height);
+    const cssW = v1.width * s, cssH = v1.height * s;
+    let ratio = Math.min(window.devicePixelRatio || 1, 3);
+    const MAX_PIXELS = 12e6; // 페이지당 픽셀 상한 (메모리 보호)
+    if (cssW * cssH * ratio * ratio > MAX_PIXELS) ratio = Math.sqrt(MAX_PIXELS / (cssW * cssH));
+    const vp = page.getViewport({ scale: s * ratio });
+    const canvas = document.createElement('canvas');
+    canvas.className = 'pf-canvas';
+    canvas.width = Math.ceil(vp.width);
+    canvas.height = Math.ceil(vp.height);
+    const ctx = canvas.getContext('2d', { alpha: false });
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    await page.render({ canvasContext: ctx, viewport: vp }).promise;
+    if (gen !== bookGen || doc !== pdfDoc || el._done) { canvas.width = 0; return; }
+    canvas.style.width = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+    canvas.style.left = ((pw - cssW) / 2) + 'px';
+    canvas.style.top = ((ph - cssH) / 2) + 'px';
+    el.insertBefore(canvas, el.querySelector('.pf-grain'));
+    el._done = true;
+    el.classList.add('ready');
+    await renderTextLayer(el, canvas, page, s, gen);
+  } catch (e) {
+    if (gen === bookGen) { el._done = true; console.error(e); }
   }
 }
 
-const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* ================= 넘기기 ================= */
+function canFlip() { return !!pf && screenMode === 'pdf'; }
 
-function logicalW(c) { return c.style.width ? parseFloat(c.style.width) : c.width; }
-function logicalH(c) { return c.style.height ? parseFloat(c.style.height) : c.height; }
-
-// 캔버스를 동기적으로 복제 (img.src 비동기 로드로 인한 첫 프레임 깜빡임 방지)
-function cloneCanvasFace(src) {
-  const c = document.createElement('canvas');
-  c.width = src.width;
-  c.height = src.height;
-  if (src.width && src.height) c.getContext('2d').drawImage(src, 0, 0);
-  return c;
+function nextPage() {
+  if (!canFlip() || nb.disabled) return;
+  if (reduceMotion) { pf.turnToNextPage(); return; }
+  const vis = visibleIdx(curIdx);
+  applyShift(vis[vis.length - 1] + 1); // 넘기기 시작과 함께 책 위치도 옮겨 자연스럽게
+  pf.flipNext('bottom');
 }
 
-// 회전 카드와 정지 오버레이를 정지 상태로 먼저 깔아 새 페이지 렌더를 가린다.
-function buildFlip(dir) {
-  const rect = book.getBoundingClientRect();
-  if (!rect.width || !rect.height) return null;
-
-  const isNext   = dir === 'r';
-  const isSingle = book.classList.contains('single');
-  const pageW    = isSingle ? rect.width : rect.width / 2;
-
-  // 회전하는 페이지 / 반대쪽(정지) 페이지의 현재 캔버스
-  const turnCanvas   = (!isSingle && !isNext) ? lc : rc;
-  const staticCanvas = (!isSingle && !isNext) ? rc : lc;
-
-  // 반대쪽 페이지를 이전 내용으로 덮어 즉시 교체(깜빡임)를 막음
-  let staticEl = null;
-  if (!isSingle && staticCanvas.width) {
-    staticEl = document.createElement('div');
-    staticEl.className = 'flip-static';
-    staticEl.style.cssText = `left:${isNext ? 0 : pageW}px; width:${pageW}px;`;
-    staticEl.appendChild(cloneCanvasFace(staticCanvas));
-    book.appendChild(staticEl);
-  }
-
-  // 원근감 씬
-  const scene = document.createElement('div');
-  scene.className = 'flip-scene';
-  scene.style.cssText = `left:${isNext ? (isSingle ? 0 : pageW) : 0}px; width:${pageW}px;`;
-
-  // 뒤집히는 카드 (아직 .go 미부착 → 정지)
-  const card = document.createElement('div');
-  card.className = `flip-card ${isNext ? 'to-left' : 'to-right'}`;
-
-  const front = document.createElement('div');
-  front.className = 'flip-face front';
-  if (turnCanvas.width) front.appendChild(cloneCanvasFace(turnCanvas));
-
-  const back = document.createElement('div');
-  back.className = 'flip-face back';
-
-  card.append(front, back);
-  scene.appendChild(card);
-  book.appendChild(scene);
-
-  return { scene, staticEl, card };
+function prevPage() {
+  if (!canFlip() || pb.disabled) return;
+  if (reduceMotion) { pf.turnToPrevPage(); return; }
+  applyShift(spreadStart(visibleIdx(curIdx)[0] - 1));
+  pf.flipPrev('bottom');
 }
 
-// 새 페이지가 렌더된 뒤 호출 → 회전 시작, 종료 시 오버레이 제거
-function runFlip(flip) {
-  return new Promise(resolve => {
-    if (!flip) return resolve();
-    const done = () => {
-      flip.scene.remove();
-      if (flip.staticEl) flip.staticEl.remove();
-      resolve();
-    };
-    flip.card.addEventListener('animationend', done, { once: true });
-    setTimeout(done, 1000); // 안전장치
-    // 강제 리플로우 후 회전 시작 (정지 프레임이 먼저 그려지도록)
-    void flip.card.offsetWidth;
-    flip.card.classList.add('go');
-  });
-}
-
-async function renderSpread(idx) {
-  if (idx < 0 || idx >= spreads.length) return;
-  const sp = spreads[idx];
-  const single = (sp.type === 'cover' || sp.type === 'back' || sp.pages.length === 1);
-
-  if (single) {
-    book.className = 'single';
-    ls.style.display = 'none';
-    rs.style.display = 'block';
-    ltl.innerHTML = '';
-    await renderPage(rc, rtl, sp.pages[0]);
-    rs.style.width = logicalW(rc) + 'px';
-    rs.style.height = logicalH(rc) + 'px';
-    rn.textContent = sp.type === 'cover' ? '표지' : sp.type === 'back' ? '뒷표지' : sp.pages[0];
-    ln.textContent = '';
+async function goToPdfPage(p, animate = true) {
+  if (!canFlip()) return;
+  const target = idxOfPdfPage(p);
+  if (visibleIdx(curIdx).includes(target)) return;
+  const inst = pf;
+  const tv = visibleIdx(spreadStart(target));
+  prioritize(tv);
+  await waitForPages(tv, 1500);
+  if (inst !== pf) return;
+  if (animate && !reduceMotion) {
+    applyShift(target);
+    pf.flip(target, 'bottom');
   } else {
-    book.className = 'spread';
-    ls.style.display = 'block';
-    rs.style.display = 'block';
-    await Promise.all([renderPage(lc, ltl, sp.pages[0]), renderPage(rc, rtl, sp.pages[1] || null)]);
-    const h = Math.max(logicalH(lc), logicalH(rc));
-    ls.style.width = logicalW(lc) + 'px'; ls.style.height = h + 'px';
-    rs.style.width = logicalW(rc) + 'px'; rs.style.height = h + 'px';
-    ln.textContent = sp.pages[0];
-    rn.textContent = sp.pages[1] || '';
+    pf.turnToPage(target);
   }
-
-  pb.disabled = (idx === 0);
-  nb.disabled = (idx === spreads.length - 1);
-
-  const pgs = sp.pages.join('–');
-  const lbl = sp.type === 'cover' ? '표지' : sp.type === 'back' ? '뒷표지' : `${pgs}쪽`;
-  pi.textContent = `${lbl}  (${idx + 1}/${spreads.length})`;
-  centerViewer();
 }
 
-async function go(idx, dir) {
-  if (busy || idx < 0 || idx >= spreads.length) return;
-  if (idx === curSpread) return;
-  busy = true;
-  // 1) 회전 카드를 정지 상태로 깔아 현재 화면을 가린다
-  const flip = (dir && !reduceMotion) ? buildFlip(dir) : null;
-  // 2) 가려진 상태에서 새 페이지를 렌더 (깜빡임 방지)
-  curSpread = idx;
-  await renderSpread(idx);
-  // 3) 회전 시작 → 새 페이지가 자연스럽게 드러남
-  if (flip) await runFlip(flip);
-  busy = false;
-}
+pb.addEventListener('click', prevPage);
+nb.addEventListener('click', nextPage);
+$('first-action').addEventListener('click', () => { closeMoreMenu(); goToPdfPage(1); });
+$('last-action').addEventListener('click', () => { closeMoreMenu(); goToPdfPage(total); });
+$('fit-action').addEventListener('click', () => { closeMoreMenu(); setZoom(1); });
 
-pb.addEventListener('click', () => go(curSpread - 1, 'l'));
-nb.addEventListener('click', () => go(curSpread + 1, 'r'));
-tapPrev.addEventListener('click', () => {
-  if (zoomF > 1 || vwr.style.display !== 'flex') return;
-  go(curSpread - 1, 'l');
+// 하단 슬라이더
+let scrubbing = false;
+scrub.addEventListener('input', () => {
+  scrubbing = true;
+  scrubLabel.textContent = t('page', scrub.value);
 });
-tapNext.addEventListener('click', () => {
-  if (zoomF > 1 || vwr.style.display !== 'flex') return;
-  go(curSpread + 1, 'r');
+scrub.addEventListener('change', () => {
+  scrubbing = false;
+  goToPdfPage(Number(scrub.value));
+  updateChrome();
 });
-firstAction.addEventListener('click', () => { closeMoreMenu(); go(0); });
-lastAction.addEventListener('click', () => { closeMoreMenu(); go(spreads.length - 1); });
-fitAction.addEventListener('click', () => { closeMoreMenu(); zoomF = 1; renderSpread(curSpread); });
-document.addEventListener('keydown', e => {
-  if (vwr.style.display === 'flex') {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(curSpread + 1, 'r');
-    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') go(curSpread - 1, 'l');
-  }
-  if (e.key === 'Escape') {
-    helpModal.classList.remove('on');
-    closeMoreMenu();
-  }
-});
-
-function applyZoom() { renderSpread(curSpread); }
-document.getElementById('zi').addEventListener('click', () => { zoomF = Math.min(zoomF + .15, 2.5); applyZoom(); });
-document.getElementById('zo').addEventListener('click', () => { zoomF = Math.max(zoomF - .15, .4); applyZoom(); });
-
-function spreadOfPage(pageNumber) {
-  const idx = spreads.findIndex(s => s.pages.includes(pageNumber));
-  return idx >= 0 ? idx : 0;
-}
-
-function applyViewModeUI(mode) {
-  // 토글 버튼은 현재 모드 아이콘을 표시
-  viewIcon.textContent = mode === 'single' ? 'article' : 'auto_stories';
-}
 
 function jumpToPage() {
-  if (!pdfDoc) {
-    showErr('먼저 PDF를 불러와주세요.');
-    return;
-  }
+  if (!pdfDoc) { showErr(t('needPdf')); return; }
   const page = Number(pageInput.value);
   if (!Number.isInteger(page) || page < 1 || page > total) {
-    showErr(`1부터 ${total} 사이 페이지를 입력해주세요.`);
+    showErr(t('pageRange', total));
     return;
   }
-  go(spreadOfPage(page));
+  pageInput.blur();
+  goToPdfPage(page);
 }
 pageGoBtn.addEventListener('click', jumpToPage);
-pageInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') jumpToPage();
+pageInput.addEventListener('keydown', e => { if (e.key === 'Enter') jumpToPage(); });
+pageInput.addEventListener('blur', () => { if (pf) pageInput.value = currentPdfPage(); });
+
+function isTypingTarget(el) {
+  return el && (el.tagName === 'INPUT' && el.type !== 'range' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (helpModal.classList.contains('on')) closeHelp();
+    else if (moreMenu.classList.contains('on')) { closeMoreMenu(); moreBtn.focus(); }
+    else if (pseudoFs) toggleFullscreen();
+    return;
+  }
+  if (helpModal.classList.contains('on') || moreMenu.classList.contains('on')) return;
+  if (isTypingTarget(e.target) || e.altKey) return;
+  if (!canFlip()) return;
+  if (e.ctrlKey || e.metaKey) {
+    if (e.key === '=' || e.key === '+') { e.preventDefault(); setZoom(zoomF * 1.2); }
+    else if (e.key === '-') { e.preventDefault(); setZoom(zoomF / 1.2); }
+    else if (e.key === '0') { e.preventDefault(); setZoom(1); }
+    return;
+  }
+  const panning = vwr.classList.contains('pan');
+  switch (e.key) {
+    case 'ArrowRight': case 'PageDown':
+      e.preventDefault(); nextPage(); break;
+    case 'ArrowLeft': case 'PageUp':
+      e.preventDefault(); prevPage(); break;
+    case 'ArrowDown':
+      if (!panning) { e.preventDefault(); nextPage(); } break;
+    case 'ArrowUp':
+      if (!panning) { e.preventDefault(); prevPage(); } break;
+    case ' ':
+      if (e.target.tagName === 'BUTTON') return;
+      e.preventDefault(); e.shiftKey ? prevPage() : nextPage(); break;
+    case 'Home':
+      e.preventDefault(); goToPdfPage(1); break;
+    case 'End':
+      e.preventDefault(); goToPdfPage(total); break;
+  }
 });
 
-async function setViewMode(mode) {
+/* ================= 종이 넘김 소리 (Web Audio 합성 — 외부 파일 없음) ================= */
+let audioCtx = null;
+function playFlipSound() {
+  if (!soundOn) return;
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    audioCtx = audioCtx || new AC();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const sr = audioCtx.sampleRate;
+    const dur = .5;
+    const buf = audioCtx.createBuffer(1, Math.floor(sr * dur), sr);
+    const d = buf.getChannelData(0);
+    let lp = 0;
+    for (let i = 0; i < d.length; i++) {
+      const x = i / d.length;
+      // 종이가 들리며 스치는 소리: 빠른 상승 → 중간 부풀음 → 사그라듦
+      const env = Math.pow(Math.sin(Math.PI * Math.min(1, x * 1.1)), 1.8) * (1 - .4 * x);
+      lp = lp * .55 + (Math.random() * 2 - 1) * .45;
+      const crinkle = Math.random() < .0018 ? (Math.random() * 2 - 1) * 1.8 : 0;
+      d[i] = (lp + crinkle * (1 - x)) * env;
+    }
+    const src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    src.playbackRate.value = .9 + Math.random() * .2;
+    const now = audioCtx.currentTime;
+    const hp = audioCtx.createBiquadFilter();
+    hp.type = 'highpass'; hp.frequency.value = 300;
+    const bp = audioCtx.createBiquadFilter();
+    bp.type = 'bandpass'; bp.Q.value = .8;
+    bp.frequency.setValueAtTime(1100, now);
+    bp.frequency.exponentialRampToValueAtTime(3400, now + dur * .45);
+    bp.frequency.exponentialRampToValueAtTime(1500, now + dur);
+    const g = audioCtx.createGain();
+    g.gain.value = .35;
+    src.connect(hp).connect(bp).connect(g).connect(audioCtx.destination);
+    src.start(now);
+  } catch {}
+}
+
+function updateSoundUI() {
+  soundIcon.textContent = soundOn ? 'volume_up' : 'volume_off';
+  soundState.textContent = soundOn ? t('on') : t('off');
+  soundAction.classList.toggle('toggle-on', soundOn);
+  soundAction.setAttribute('aria-checked', String(soundOn));
+}
+soundAction.addEventListener('click', () => {
+  soundOn = !soundOn;
+  store.set('easybook-sound', soundOn ? 'on' : 'off');
+  updateSoundUI();
+  if (soundOn) playFlipSound();
+});
+
+/* ================= 확대/축소 ================= */
+function updateZoomUI() {
+  zoomLabel.textContent = Math.round(zoomF * 100) + '%';
+  $('zo').disabled = zoomF <= ZOOM_MIN + .001;
+  $('zi').disabled = zoomF >= ZOOM_MAX - .001;
+}
+
+function setZoom(z) {
+  z = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
+  if (Math.abs(z - 1) < .04) z = 1; // 100% 근처는 화면 맞춤으로 스냅
+  stage.style.transform = '';
+  if (Math.abs(z - zoomF) < .001) return;
+  zoomF = z;
+  updateZoomUI();
+  if (pdfDoc && screenMode === 'pdf') buildBook(currentPdfPage());
+}
+
+$('zi').addEventListener('click', () => setZoom(zoomF * 1.2));
+$('zo').addEventListener('click', () => setZoom(zoomF / 1.2));
+zoomLabel.addEventListener('click', () => setZoom(1));
+
+// 휠/핀치 중에는 CSS 배율로 즉시 미리보기, 멈추면 고해상도로 다시 그림
+let previewZoom = null, previewTimer = null;
+function previewZoomTo(z) {
+  previewZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
+  stage.style.transform = `scale(${previewZoom / zoomF})`;
+}
+function commitPreviewZoom() {
+  if (previewZoom === null) return;
+  const z = previewZoom;
+  previewZoom = null;
+  setZoom(z);
+}
+
+vwr.addEventListener('wheel', e => {
+  if (!(e.ctrlKey || e.metaKey) || !canFlip()) return;
+  e.preventDefault();
+  previewZoomTo((previewZoom ?? zoomF) * Math.exp(-e.deltaY * .0025));
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(commitPreviewZoom, 220);
+}, { passive: false });
+
+/* ================= 확대 상태에서 끌어서 이동 · 핀치 ================= */
+// 캡처 단계에서 가로채 StPageFlip 이 페이지를 넘기지 않게 한다.
+let drag = null;
+let selectingText = false;
+
+// 글자 위를 눌렀는지 — 단, 페이지 바깥 모서리 근처는 넘기기를 우선한다
+function isTextPress(e) {
+  const span = e.target && e.target.closest && e.target.closest('.pf-text span');
+  if (!span || !pf || pf.getState() !== 'read') return false;
+  const page = span.closest('.pf-page');
+  const r = page.getBoundingClientRect();
+  const zone = Math.hypot(r.width, r.height) / 7;
+  const outerX = page.classList.contains('--left') ? r.left : r.right;
+  return ![r.top, r.bottom].some(y => Math.hypot(e.clientX - outerX, e.clientY - y) < zone);
+}
+
+vwr.addEventListener('mousedown', e => {
+  if (e.button !== 0 || !canFlip()) return;
+  if (isTextPress(e)) {
+    // 기본 동작(글자 선택)은 살리고 라이브러리의 넘기기만 막는다
+    e.stopPropagation();
+    selectingText = true;
+    return;
+  }
+  if (!vwr.classList.contains('pan')) return;
+  e.stopPropagation();
+  e.preventDefault();
+  drag = { x: e.clientX, y: e.clientY, l: vwr.scrollLeft, t: vwr.scrollTop };
+  vwr.classList.add('dragging');
+}, true);
+vwr.addEventListener('mousemove', e => {
+  if (vwr.classList.contains('pan')) e.stopPropagation();
+}, true);
+window.addEventListener('mousemove', e => {
+  if (selectingText) { e.stopPropagation(); return; } // 선택 중 모서리 들춤 방지
+  if (!drag) return;
+  e.stopPropagation();
+  vwr.scrollLeft = drag.l - (e.clientX - drag.x);
+  vwr.scrollTop = drag.t - (e.clientY - drag.y);
+}, true);
+window.addEventListener('mouseup', () => {
+  selectingText = false;
+  if (!drag) return;
+  drag = null;
+  vwr.classList.remove('dragging');
+}, true);
+
+let pinch = null;
+function touchDist(e) {
+  const dx = e.touches[0].clientX - e.touches[1].clientX;
+  const dy = e.touches[0].clientY - e.touches[1].clientY;
+  return Math.hypot(dx, dy) || 1;
+}
+function cancelLibraryGesture() {
+  if (!pf) return;
+  try {
+    pf.getUI().touchPoint = null;
+    if (pf.getState() === 'user_fold') pf.getFlipController().stopMove();
+    pf.userStop({ x: 0, y: 0 }, true);
+  } catch {}
+}
+vwr.addEventListener('touchstart', e => {
+  if (!canFlip()) return;
+  if (e.touches.length >= 2) {
+    pinch = { d0: touchDist(e), z0: zoomF };
+    cancelLibraryGesture();
+    e.stopPropagation();
+    return;
+  }
+  if (pinch || vwr.classList.contains('pan')) e.stopPropagation();
+}, { capture: true, passive: true });
+vwr.addEventListener('touchmove', e => {
+  if (pinch) {
+    e.stopPropagation();
+    if (e.touches.length >= 2) previewZoomTo(pinch.z0 * touchDist(e) / pinch.d0);
+    return;
+  }
+  if (vwr.classList.contains('pan') || bookSelection()) e.stopPropagation();
+}, { capture: true, passive: true });
+function endTouch(e) {
+  if (pinch) {
+    e.stopPropagation();
+    if (e.touches.length === 0) {
+      pinch = null;
+      if (previewZoom !== null) commitPreviewZoom();
+    }
+    return;
+  }
+  // 길게 눌러 글자를 선택했으면 손을 뗄 때 페이지를 넘기지 않는다
+  if (bookSelection()) { e.stopPropagation(); cancelLibraryGesture(); return; }
+  if (vwr.classList.contains('pan')) e.stopPropagation();
+}
+vwr.addEventListener('touchend', endTouch, { capture: true, passive: true });
+vwr.addEventListener('touchcancel', endTouch, { capture: true, passive: true });
+
+/* ================= 보기 모드 ================= */
+function applyViewModeUI() {
+  viewIcon.textContent = viewMode === 'single' ? 'article' : 'auto_stories';
+}
+
+async function setViewMode(mode, announce = false) {
   if (mode !== 'single' && mode !== 'double') return;
   viewMode = mode;
-  applyViewModeUI(mode);
-
-  if (!pdfDoc || total < 1) return;
-
-  const pageAnchor = spreads[curSpread]?.pages[0] || 1;
-  spreads = buildSpreads(total, viewMode);
-  curSpread = spreadOfPage(pageAnchor);
-  await recalcBaseScale();
-  await renderSpread(curSpread);
+  applyViewModeUI();
+  store.set('easybook-view', mode);
+  if (!pdfDoc || screenMode !== 'pdf') return;
+  await buildBook(currentPdfPage());
+  if (announce && mode === 'double' && !layout.landscape && total > 1) showSuccess(t('narrowSingle'));
 }
-viewToggleBtn.addEventListener('click', () => {
-  setViewMode(viewMode === 'double' ? 'single' : 'double');
-});
+viewToggleBtn.addEventListener('click', () => setViewMode(viewMode === 'double' ? 'single' : 'double', true));
 
+/* ================= 테마 ================= */
 function applyTheme(theme) {
   const isLight = theme === 'light';
   document.body.classList.toggle('light', isLight);
   themeIcon.textContent = isLight ? 'light_mode' : 'dark_mode';
+  document.querySelector('meta[name="theme-color"]').content = isLight ? '#F4F5F6' : '#131416';
 }
-
-function toggleTheme() {
+themeBtn.addEventListener('click', () => {
   const next = document.body.classList.contains('light') ? 'dark' : 'light';
-  localStorage.setItem('easybook-theme', next);
+  store.set('easybook-theme', next);
   applyTheme(next);
-}
-
-themeBtn.addEventListener('click', toggleTheme);
-
-function updateFullscreenUI() {
-  const isFullscreen = !!document.fullscreenElement;
-  document.body.classList.toggle('slideshow', isFullscreen);
-  fullscreenIcon.textContent = isFullscreen ? 'fullscreen_exit' : 'fullscreen';
-  const t = I18N[currentLang] || I18N.ko;
-  const label = isFullscreen ? `${t.fullscreenTitle} 종료` : t.fullscreenTitle;
-  fullscreenBtn.title = label;
-  fullscreenBtn.setAttribute('aria-label', label);
-}
-
-async function toggleFullscreen() {
-  try {
-    if (document.fullscreenElement) {
-      await document.exitFullscreen();
-    } else {
-      await document.documentElement.requestFullscreen();
-    }
-  } catch (e) {
-    showErr('전체화면 전환 실패: ' + (e.message || '브라우저가 기능을 지원하지 않습니다.'));
-  }
-}
-
-fullscreenBtn.addEventListener('click', toggleFullscreen);
-document.addEventListener('fullscreenchange', () => {
-  updateFullscreenUI();
-  refreshViewerLayout(0);
-  refreshViewerLayout(120);
 });
 
-async function openArrayBuffer(ab, sourceURL = '') {
-  return openArrayBufferWithState(ab, sourceURL, null);
+/* ================= 전체화면 (발표 모드) ================= */
+function isFullscreen() {
+  return !!(document.fullscreenElement || document.webkitFullscreenElement) || pseudoFs;
+}
+function updateFullscreenUI() {
+  const on = isFullscreen();
+  document.body.classList.toggle('slideshow', on);
+  fullscreenIcon.textContent = on ? 'fullscreen_exit' : 'fullscreen';
+  const label = on ? t('fullscreenExit') : t('fullscreenTitle');
+  fullscreenBtn.title = label;
+  fullscreenBtn.setAttribute('aria-label', label);
+  if (on) poke(); else document.body.classList.remove('idle');
+}
+async function toggleFullscreen() {
+  const de = document.documentElement;
+  try {
+    if (document.fullscreenElement) { await document.exitFullscreen(); return; }
+    if (document.webkitFullscreenElement) { document.webkitExitFullscreen(); return; }
+    if (pseudoFs) { pseudoFs = false; onFullscreenChange(); return; }
+    if (de.requestFullscreen) { await de.requestFullscreen(); return; }
+    if (de.webkitRequestFullscreen) { de.webkitRequestFullscreen(); return; }
+  } catch (e) {
+    // 전체화면 API가 막혀 있으면(예: iPhone Safari) 화면 안에서 툴바를 숨기는 방식으로 대체
+  }
+  pseudoFs = true;
+  onFullscreenChange();
+}
+function onFullscreenChange() {
+  updateFullscreenUI();
+  refreshViewerLayout(0);
+  refreshViewerLayout(150);
+}
+fullscreenBtn.addEventListener('click', toggleFullscreen);
+document.addEventListener('fullscreenchange', onFullscreenChange);
+document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+
+// 발표 모드에서 잠시 손을 떼면 컨트롤을 숨김
+let idleTimer = null;
+function poke() {
+  document.body.classList.remove('idle');
+  clearTimeout(idleTimer);
+  if (document.body.classList.contains('slideshow')) {
+    idleTimer = setTimeout(() => document.body.classList.add('idle'), 2500);
+  }
+}
+['mousemove', 'touchstart', 'keydown'].forEach(ev => document.addEventListener(ev, poke, { passive: true }));
+
+/* ================= 레이아웃 갱신 ================= */
+let layoutRefreshTimer = null;
+function refreshViewerLayout(delay = 150) {
+  clearTimeout(layoutRefreshTimer);
+  layoutRefreshTimer = setTimeout(() => {
+    if (pdfDoc && screenMode === 'pdf') buildBook(currentPdfPage());
+  }, delay);
+}
+window.addEventListener('resize', () => refreshViewerLayout(180));
+
+/* ================= 파일 열기 ================= */
+function getFingerprint(doc) {
+  return (doc.fingerprints && doc.fingerprints[0]) || doc.fingerprint || '';
 }
 
-async function openArrayBufferWithState(ab, sourceURL = '', restoreState = null) {
-  showLoader('PDF 렌더링 중…');
+function readPositions() {
+  try { return JSON.parse(store.get('easybook-pos') || '{}') || {}; } catch { return {}; }
+}
+let posTimer = null;
+function savePosition() {
+  if (!docKey) return;
+  clearTimeout(posTimer);
+  posTimer = setTimeout(() => {
+    const map = readPositions();
+    map[docKey] = { p: currentPdfPage(), t: Date.now() };
+    const keys = Object.keys(map).sort((a, b) => map[b].t - map[a].t);
+    keys.slice(40).forEach(k => delete map[k]);
+    store.set('easybook-pos', JSON.stringify(map));
+  }, 400);
+}
+
+async function openArrayBuffer(ab, sourceURL = '', restoreState = null) {
+  showLoader(t('rendering'));
   try {
+    // getDocument 가 버퍼를 워커로 넘길 수 있으므로 먼저 복사해 둔다 (프로젝트 저장용)
+    const bytes = new Uint8Array(ab.slice(0));
     const doc = await pdfjsLib.getDocument({ data: ab }).promise;
+    const old = pdfDoc;
+    if (pf) retired.push(currentEntry());
+    pf = null; bookHost = null; pageEls = []; pageMap = [];
+    bookGen++;
+    if (old) old.destroy().catch(() => {});
+
     pdfDoc = doc;
     total = doc.numPages;
+    currentPdfBytes = bytes;
+    firstPageVp = (await doc.getPage(1)).getViewport({ scale: 1 });
+    docKey = getFingerprint(doc);
     pageInput.max = String(total);
-    currentPdfBytes = new Uint8Array(ab.slice(0));
 
-    if (restoreState?.viewMode === 'single' || restoreState?.viewMode === 'double') {
-      viewMode = restoreState.viewMode;
-    }
-    applyViewModeUI(viewMode);
-    spreads = buildSpreads(total, viewMode);
-    const restoreSpread = Number.isInteger(restoreState?.spread) ? restoreState.spread : 0;
-    curSpread = Math.max(0, Math.min(restoreSpread, spreads.length - 1));
-    zoomF = (typeof restoreState?.zoom === 'number' && restoreState.zoom >= .4 && restoreState.zoom <= 2.5) ? restoreState.zoom : 1;
+    if (restoreState?.viewMode === 'single' || restoreState?.viewMode === 'double') viewMode = restoreState.viewMode;
+    applyViewModeUI();
+    zoomF = (typeof restoreState?.zoom === 'number' && restoreState.zoom >= ZOOM_MIN && restoreState.zoom <= ZOOM_MAX) ? restoreState.zoom : 1;
+    updateZoomUI();
     loadedSourceURL = restoreState?.sourceURL || sourceURL;
 
-    await recalcBaseScale();
-    await renderSpread(curSpread);
-    land.style.display = 'none';
-    showPDFViewer();
+    // 시작 쪽: 프로젝트/공유 링크 → (없으면) 마지막으로 읽던 쪽
+    let startPage = 1, resumed = false;
+    if (Number.isInteger(restoreState?.page)) startPage = restoreState.page;
+    else if (Number.isInteger(restoreState?.spread)) {
+      const legacy = buildSpreads(total, restoreState.viewMode || viewMode)[restoreState.spread];
+      if (legacy) startPage = legacy.pages[0];
+    } else {
+      const saved = readPositions()[docKey];
+      if (saved && saved.p > 1 && saved.p <= total) { startPage = saved.p; resumed = true; }
+    }
+
+    setScreen('pdf');
+    await buildBook(startPage, { force: true });
     hideLoader();
-    showSuccess(`총 ${total}페이지 · ${spreads.length}개 화면`);
+    showSuccess(resumed ? t('resumed', startPage) : t('opened', total));
+    return true;
   } catch (e) {
     hideLoader();
-    showErr('PDF 열기 실패: ' + (e.message || String(e)));
+    showErr(t('openFail') + (e.message || String(e)));
     console.error(e);
+    return false;
   }
 }
 
-fi.addEventListener('change', function() {
-  const file = this.files[0];
+function isPdfFile(file) {
+  return file && (file.type === 'application/pdf' || /\.pdf$/i.test(file.name));
+}
+function isEbookFile(file) {
+  return file && /\.ebook$/i.test(file.name);
+}
+
+function openLocalFile(file) {
   if (!file) return;
-  if (file.type !== 'application/pdf') { showErr('PDF 파일만 지원합니다.'); return; }
-  loadedSourceURL = '';
-  const reader = new FileReader();
-  reader.onload = e => openArrayBuffer(e.target.result, '');
-  reader.onerror = () => showErr('파일 읽기 실패');
-  showLoader('파일 읽는 중…');
-  reader.readAsArrayBuffer(file);
+  if (isEbookFile(file)) { loadEbookProjectFile(file); return; }
+  if (!isPdfFile(file)) { showErr(t('pdfOnly')); return; }
+  showLoader(t('reading'));
+  file.arrayBuffer()
+    .then(ab => openArrayBuffer(ab, ''))
+    .catch(() => { hideLoader(); showErr(t('readFail')); });
+}
+
+fi.addEventListener('change', function () {
+  openLocalFile(this.files[0]);
   this.value = '';
 });
 
@@ -1264,17 +1958,17 @@ function base64ToArrayBuffer(base64) {
 }
 
 function saveEbookProject() {
-  if (!pdfDoc || !currentPdfBytes) {
-    showErr('저장할 PDF가 없습니다. 먼저 PDF를 열어주세요.');
-    return;
-  }
+  if (!pdfDoc || !currentPdfBytes) { showErr(t('noSave')); return; }
+  const page = currentPdfPage();
+  const legacySpread = buildSpreads(total, viewMode).findIndex(s => s.pages.includes(page));
   const payload = {
     type: 'easybook-project',
     version: 1,
     savedAt: new Date().toISOString(),
     state: {
       viewMode,
-      spread: curSpread,
+      page,
+      spread: Math.max(0, legacySpread),
       zoom: zoomF,
       theme: document.body.classList.contains('light') ? 'light' : 'dark',
       sourceURL: loadedSourceURL || ''
@@ -1288,97 +1982,111 @@ function saveEbookProject() {
   document.body.appendChild(a);
   a.click();
   a.remove();
-  URL.revokeObjectURL(a.href);
-  showSuccess('프로젝트(.ebook) 파일로 저장했습니다.');
-}
-
-function openMoreMenu() {
-  const rect = moreBtn.getBoundingClientRect();
-  moreMenu.style.top = (rect.bottom + 8) + 'px';
-  moreMenu.style.right = (window.innerWidth - rect.right) + 'px';
-  moreMenu.style.left = 'auto';
-  moreMenu.classList.add('on');
-  moreBtn.setAttribute('aria-expanded', 'true');
-}
-
-function closeMoreMenu() {
-  moreMenu.classList.remove('on');
-  moreBtn.setAttribute('aria-expanded', 'false');
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  showSuccess(t('saved'));
 }
 
 async function loadEbookProjectFile(file) {
   if (!file) return;
-  showLoader('프로젝트 파일을 불러오는 중…');
+  showLoader(t('projLoading'));
   try {
-    const text = await file.text();
-    const payload = JSON.parse(text);
+    const payload = JSON.parse(await file.text());
     if (payload?.type !== 'easybook-project' || payload?.version !== 1 || !payload?.pdfBase64) {
-      throw new Error('지원하지 않는 프로젝트 파일입니다.');
+      throw new Error(t('projUnsupported'));
     }
     if (payload?.state?.theme === 'light' || payload?.state?.theme === 'dark') {
-      localStorage.setItem('easybook-theme', payload.state.theme);
+      store.set('easybook-theme', payload.state.theme);
       applyTheme(payload.state.theme);
     }
     const ab = base64ToArrayBuffer(payload.pdfBase64);
-    await openArrayBufferWithState(ab, payload?.state?.sourceURL || '', payload.state || null);
-    showSuccess('프로젝트를 불러왔습니다.');
+    const ok = await openArrayBuffer(ab, payload?.state?.sourceURL || '', payload.state || {});
+    if (ok) showSuccess(t('projLoaded'));
   } catch (e) {
     hideLoader();
-    showErr('프로젝트 불러오기 실패: ' + (e.message || String(e)));
+    showErr(t('projFail') + (e.message || String(e)));
     console.error(e);
   } finally {
     ebookFi.value = '';
   }
 }
 
-moreBtn.addEventListener('click', (e) => {
+/* ================= 더보기 메뉴 ================= */
+function openMoreMenu() {
+  const rect = moreBtn.getBoundingClientRect();
+  moreMenu.style.top = (rect.bottom + 8) + 'px';
+  moreMenu.style.right = Math.max(8, window.innerWidth - rect.right) + 'px';
+  moreMenu.style.left = 'auto';
+  moreMenu.classList.add('on');
+  moreBtn.setAttribute('aria-expanded', 'true');
+  const first = moreMenu.querySelector('.menu-action');
+  if (first) first.focus({ preventScroll: true });
+}
+function closeMoreMenu() {
+  moreMenu.classList.remove('on');
+  moreBtn.setAttribute('aria-expanded', 'false');
+}
+moreBtn.addEventListener('click', e => {
   e.stopPropagation();
   if (moreMenu.classList.contains('on')) closeMoreMenu();
   else openMoreMenu();
 });
-projectSaveAction.addEventListener('click', () => {
-  closeMoreMenu();
-  saveEbookProject();
+moreMenu.addEventListener('keydown', e => {
+  if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+  e.preventDefault();
+  const items = [...moreMenu.querySelectorAll('.menu-action')];
+  const i = items.indexOf(document.activeElement);
+  const next = items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length];
+  next.focus();
 });
-projectLoadAction.addEventListener('click', () => {
-  closeMoreMenu();
-  ebookFi.click();
+$('project-save-action').addEventListener('click', () => { closeMoreMenu(); saveEbookProject(); });
+$('project-load-action').addEventListener('click', () => { closeMoreMenu(); ebookFi.click(); });
+$('share-action').addEventListener('click', () => { closeMoreMenu(); shareCurrentLink(); });
+$('reset-action').addEventListener('click', () => { closeMoreMenu(); resetViewer(); });
+$('help-action').addEventListener('click', () => { closeMoreMenu(); openHelp(); });
+$('lang-ko').addEventListener('click', () => { closeMoreMenu(); applyLanguage('ko'); });
+$('lang-en').addEventListener('click', () => { closeMoreMenu(); applyLanguage('en'); });
+$('lang-ja').addEventListener('click', () => { closeMoreMenu(); applyLanguage('ja'); });
+ebookFi.addEventListener('change', e => loadEbookProjectFile(e.target.files[0]));
+document.addEventListener('click', e => {
+  if (moreMenu.classList.contains('on') && !moreBtn.contains(e.target) && !moreMenu.contains(e.target)) closeMoreMenu();
 });
-shareAction.addEventListener('click', () => { closeMoreMenu(); shareCurrentLink(); });
-resetAction.addEventListener('click', () => { closeMoreMenu(); resetViewer(); });
-helpAction.addEventListener('click', () => { closeMoreMenu(); helpModal.classList.add('on'); });
-langKoBtn.addEventListener('click', () => { closeMoreMenu(); applyLanguage('ko'); });
-langEnBtn.addEventListener('click', () => { closeMoreMenu(); applyLanguage('en'); });
-langJaBtn.addEventListener('click', () => { closeMoreMenu(); applyLanguage('ja'); });
-ebookFi.addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  loadEbookProjectFile(file);
-});
-document.addEventListener('click', (e) => {
-  if (moreMenu.classList.contains('on')) {
-    if (!(e.target === moreBtn || moreBtn.contains(e.target) || e.target === moreMenu || moreMenu.contains(e.target))) {
-      closeMoreMenu();
-    }
-  }
-});
+window.addEventListener('resize', closeMoreMenu);
 
-document.body.addEventListener('dragenter', e => { e.preventDefault(); document.body.classList.add('drag-over'); });
+/* ================= 도움말 ================= */
+let helpReturnFocus = null;
+function openHelp() {
+  helpReturnFocus = document.activeElement;
+  helpModal.classList.add('on');
+  helpCloseBtn.focus();
+}
+function closeHelp() {
+  helpModal.classList.remove('on');
+  if (helpReturnFocus && helpReturnFocus.focus) helpReturnFocus.focus();
+}
+helpCloseBtn.addEventListener('click', closeHelp);
+helpModal.addEventListener('click', e => { if (e.target === helpModal) closeHelp(); });
+
+/* ================= 드래그 앤 드롭 ================= */
+let dragDepth = 0;
+document.body.addEventListener('dragenter', e => {
+  if (!e.dataTransfer || ![...e.dataTransfer.types].includes('Files')) return;
+  e.preventDefault();
+  dragDepth++;
+  document.body.classList.add('drag-over');
+});
 document.body.addEventListener('dragover', e => { e.preventDefault(); });
-document.body.addEventListener('dragleave', e => { if (!e.relatedTarget) document.body.classList.remove('drag-over'); });
+document.body.addEventListener('dragleave', () => {
+  dragDepth = Math.max(0, dragDepth - 1);
+  if (!dragDepth) document.body.classList.remove('drag-over');
+});
 document.body.addEventListener('drop', e => {
   e.preventDefault();
+  dragDepth = 0;
   document.body.classList.remove('drag-over');
-  const file = e.dataTransfer.files[0];
-  if (!file) return;
-  if (file.type !== 'application/pdf') { showErr('PDF 파일만 지원합니다.'); return; }
-  loadedSourceURL = '';
-  const reader = new FileReader();
-  reader.onload = ev => openArrayBuffer(ev.target.result, '');
-  reader.onerror = () => showErr('파일 읽기 실패');
-  showLoader('파일 읽는 중…');
-  reader.readAsArrayBuffer(file);
+  openLocalFile(e.dataTransfer.files[0]);
 });
 
+/* ================= URL / Google Drive ================= */
 function extractDriveId(url) {
   const patterns = [
     /drive\.google\.com\/file\/d\/([^/?#\s]+)/,
@@ -1406,235 +2114,135 @@ function toDirectURL(raw) {
       shareableRaw: `https://drive.google.com/file/d/${driveId}/view`
     };
   }
-  return { url, isGdrive: false, driveId:'', shareableRaw: url };
+  return { url, isGdrive: false, driveId: '', shareableRaw: url };
 }
 
 // 응답 앞부분이 PDF(%PDF-)인지 검증. HTML(드라이브 안내 페이지 등)이면 false.
 function looksLikePDF(arrayBuffer) {
   const head = new Uint8Array(arrayBuffer.slice(0, 5));
-  // %PDF-
   return head[0] === 0x25 && head[1] === 0x50 && head[2] === 0x44 && head[3] === 0x46 && head[4] === 0x2D;
 }
 
-async function fetchAsArrayBuffer(url, isGdrive) {
-  const finalUrl = PROXY_URL + encodeURIComponent(url);
-  const response = await fetch(finalUrl, {
+async function fetchAsArrayBuffer(url, onProgress) {
+  const response = await fetch(PROXY_URL + encodeURIComponent(url), {
     mode: 'cors',
     credentials: 'omit',
     cache: 'no-store'
   });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  const ab = await response.arrayBuffer();
-  // PDF가 아니면(HTML 안내 페이지 등) 명확히 실패 처리 → 드라이브는 임베드 폴백
-  if (!looksLikePDF(ab)) {
-    throw new Error('NOT_PDF');
+  let ab;
+  const totalLen = Number(response.headers.get('content-length')) || 0;
+  if (response.body && response.body.getReader) {
+    const reader = response.body.getReader();
+    const chunks = [];
+    let received = 0;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      received += value.length;
+      onProgress && onProgress(received, totalLen);
+    }
+    const out = new Uint8Array(received);
+    let off = 0;
+    for (const c of chunks) { out.set(c, off); off += c.length; }
+    ab = out.buffer;
+  } else {
+    ab = await response.arrayBuffer();
   }
+  // PDF가 아니면(HTML 안내 페이지 등) 명확히 실패 처리 → 드라이브는 임베드 폴백
+  if (!looksLikePDF(ab)) throw new Error('NOT_PDF');
   return ab;
 }
 
 function openDriveEmbedById(driveId, rawUrlForShare) {
-  const embedURL = `https://drive.google.com/file/d/${driveId}/preview`;
   loadedSourceURL = rawUrlForShare;
-  land.style.display = 'none';
-  showEmbedViewer(embedURL);
-  pi.textContent = 'Google Drive 임베드 보기';
-  showSuccess('브라우저 정책으로 PDF.js 로드가 막혀 임베드 모드로 전환했습니다.');
+  setScreen('embed');
+  embedFrame.src = `https://drive.google.com/file/d/${driveId}/preview`;
+  pi.textContent = t('embedLabel');
+  showSuccess(t('embedSwitched'));
 }
 
-async function loadFromURL() {
+async function loadFromURL(restoreState = null) {
   const raw = uiEl.value.trim();
-  if (!raw) return;
+  if (!raw) { uiEl.focus(); return false; }
   const { url, isGdrive, driveId, shareableRaw } = toDirectURL(raw);
-
-  showLoader(isGdrive
-    ? 'Google Drive에서 파일 확인 중…\n(공유 설정: 링크가 있는 모든 사용자)'
-    : 'PDF 다운로드 중…');
+  const baseMsg = isGdrive ? t('driveChecking') : t('downloading');
+  showLoader(baseMsg);
 
   try {
-    const ab = await fetchAsArrayBuffer(url, isGdrive);
-    await openArrayBuffer(ab, shareableRaw);
+    const ab = await fetchAsArrayBuffer(url, (got, len) => {
+      const mb = (got / 1048576).toFixed(1) + 'MB';
+      lt.textContent = `${baseMsg}\n${len ? Math.round(got / len * 100) + '% · ' : ''}${mb}`;
+    });
+    return await openArrayBuffer(ab, shareableRaw, restoreState ? { ...restoreState, sourceURL: shareableRaw } : null);
   } catch (e) {
     hideLoader();
     const msg = (e && e.message) ? String(e.message) : '';
-    if (msg.includes('HTTP 403')) {
-      showErr(
-        '프록시 403 오류: Worker의 ALLOWED_DOMAIN 설정을 현재 앱 도메인과 일치시켜주세요.\n' +
-        '예) https://easybook.chichiboo.link 또는 로컬 개발 주소를 추가 허용'
-      );
-      return;
-    }
-    if (isGdrive && driveId) {
-      openDriveEmbedById(driveId, shareableRaw);
-      return;
-    }
-    if (isGdrive) {
-      showErr(
-        'Google Drive 링크 불러오기 실패\n' +
-        '① 파일 공유를 "링크가 있는 모든 사용자"로 설정\n' +
-        '② PDF 원본 링크인지 확인\n' +
-        '③ 계속 실패하면 로컬 파일 업로드를 사용'
-      );
-    } else if (msg === 'NOT_PDF') {
-      showErr('응답이 PDF가 아닙니다. PDF 원본 링크인지, 로그인 없이 접근 가능한지 확인해주세요.');
-    } else {
-      showErr('URL 로드 실패: ' + (e.message || '서버 CORS 설정을 확인하세요.'));
-    }
+    if (msg.includes('HTTP 403')) { showErr(t('proxy403')); return false; }
+    if (isGdrive && driveId) { openDriveEmbedById(driveId, shareableRaw); return false; }
+    if (isGdrive) showErr(t('driveFail'));
+    else if (msg === 'NOT_PDF') showErr(t('notPdf'));
+    else showErr(t('urlFail') + (msg || t('corsHint')));
     console.error(e);
+    return false;
   }
 }
 
-document.getElementById('lub').addEventListener('click', loadFromURL);
+$('lub').addEventListener('click', () => loadFromURL());
 uiEl.addEventListener('keydown', e => { if (e.key === 'Enter') loadFromURL(); });
 
 function currentShareLink() {
   if (!loadedSourceURL) return '';
   const share = new URL(location.href);
+  share.search = '';
+  share.hash = '';
   share.searchParams.set('pdf', loadedSourceURL);
   share.searchParams.set('view', viewMode);
-  share.searchParams.set('s', String(curSpread));
+  if (pdfDoc) share.searchParams.set('p', String(currentPdfPage()));
   return share.toString();
 }
 
 async function shareCurrentLink() {
   const link = currentShareLink();
-  if (!link) {
-    showErr('공유 링크는 URL로 불러온 PDF에서만 생성됩니다.');
-    return;
-  }
+  if (!link) { showErr(t('shareOnlyUrl')); return; }
   try {
     await navigator.clipboard.writeText(link);
-    showSuccess('공유 링크를 복사했습니다. 상대방이 같은 eBook을 바로 열 수 있습니다.');
+    showSuccess(t('shareCopied'));
   } catch {
-    showErr('클립보드 복사 실패. 링크를 수동으로 복사해주세요:\n' + link);
+    showErr(t('clipFail') + link);
   }
 }
 
 function resetViewer() {
+  if (pf) retired.push(currentEntry());
+  retired.splice(0).forEach(destroyInstance);
+  pf = null; bookHost = null; pageEls = []; pageMap = [];
+  bookGen++;
+  if (pdfDoc) pdfDoc.destroy().catch(() => {});
   pdfDoc = null;
   currentPdfBytes = null;
   total = 0;
-  curSpread = 0;
-  spreads = [];
+  docKey = '';
   zoomF = 1;
+  updateZoomUI();
   loadedSourceURL = '';
   pi.textContent = '';
   pageInput.value = '';
   pageInput.max = '';
-  progbar.style.width = '0%';
-  vwr.style.display = 'none';
-  embedWrap.style.display = 'none';
-  embedFrame.src = 'about:blank';
-  land.style.display = 'flex';
+  pageTotal.textContent = '';
   uiEl.value = '';
-  showSuccess('열려 있던 PDF를 초기화했습니다.');
+  setScreen('land');
+  history.replaceState(null, '', location.pathname);
+  showSuccess(t('resetDone'));
 }
 
-const savedTheme = localStorage.getItem('easybook-theme');
-applyTheme(savedTheme === 'dark' ? 'dark' : 'light');
-applyLanguage(localStorage.getItem('easybook-lang') || 'ko');
-
-const qp = new URLSearchParams(location.search);
-const initialPDF = qp.get('pdf');
-const initialView = qp.get('view');
-if (initialView === 'single' || initialView === 'double') setViewMode(initialView);
-if (initialPDF) {
-  uiEl.value = initialPDF;
-  loadFromURL().then(() => {
-    if (vwr.style.display === 'flex') {
-      const s = Number(qp.get('s'));
-      if (!Number.isNaN(s) && spreads[s]) go(s);
-    }
-  });
-}
-
-document.getElementById('help-close').addEventListener('click', () => helpModal.classList.remove('on'));
-helpModal.addEventListener('click', (e) => { if (e.target === helpModal) helpModal.classList.remove('on'); });
-window.addEventListener('resize', () => {
-  refreshViewerLayout(0);
-});
-
-vwr.addEventListener('pointerdown', (e) => {
-  if (zoomF <= 1 || vwr.style.display !== 'flex') return;
-  if (e.target.closest('.text-layer')) return;
-  isPanning = true;
-  vwr.classList.add('dragging');
-  panStartX = e.clientX;
-  panStartY = e.clientY;
-  panScrollL = vwr.scrollLeft;
-  panScrollT = vwr.scrollTop;
-  vwr.setPointerCapture(e.pointerId);
-});
-vwr.addEventListener('pointermove', (e) => {
-  if (!isPanning) return;
-  vwr.scrollLeft = panScrollL - (e.clientX - panStartX);
-  vwr.scrollTop = panScrollT - (e.clientY - panStartY);
-});
-function stopPan() {
-  isPanning = false;
-  vwr.classList.remove('dragging');
-}
-vwr.addEventListener('pointerup', stopPan);
-vwr.addEventListener('pointercancel', stopPan);
-
-let touchStartX = 0, touchStartY = 0;
-let touchMulti = false, pinchStartDist = 0, pinchStartZoom = 1, pinchCurrentZoom = 1;
-
-function getPinchDist(e) {
-  const dx = e.touches[0].clientX - e.touches[1].clientX;
-  const dy = e.touches[0].clientY - e.touches[1].clientY;
-  return Math.sqrt(dx * dx + dy * dy);
-}
-
-vwr.addEventListener('touchstart', e => {
-  if (e.touches.length >= 2) {
-    touchMulti = true;
-    pinchStartDist = getPinchDist(e);
-    pinchStartZoom = zoomF;
-    pinchCurrentZoom = zoomF;
-    return;
-  }
-  if (zoomF > 1) return;
-  touchMulti = false;
-  touchStartX = e.changedTouches[0].clientX;
-  touchStartY = e.changedTouches[0].clientY;
-}, { passive: true });
-
-vwr.addEventListener('touchmove', e => {
-  if (!touchMulti || e.touches.length < 2 || pinchStartDist === 0) return;
-  const ratio = getPinchDist(e) / pinchStartDist;
-  pinchCurrentZoom = Math.max(0.4, Math.min(2.5, pinchStartZoom * ratio));
-  // 핀치 중 즉각적인 시각 피드백 (CSS 스케일) — 손 떼면 고해상도 재렌더
-  const scaleRatio = pinchCurrentZoom / pinchStartZoom;
-  book.style.transformOrigin = 'center center';
-  book.style.transform = `scale(${scaleRatio})`;
-}, { passive: true });
-
-vwr.addEventListener('touchend', e => {
-  if (touchMulti) {
-    if (e.touches.length < 2) {
-      touchMulti = false;
-      book.style.transform = '';
-      if (pinchStartDist > 0) {
-        zoomF = pinchCurrentZoom;
-        pinchStartDist = 0;
-        renderSpread(curSpread);
-      }
-    }
-    return;
-  }
-  if (zoomF > 1) return;
-  const dx = e.changedTouches[0].clientX - touchStartX;
-  const dy = e.changedTouches[0].clientY - touchStartY;
-  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-    if (dx < 0) go(curSpread + 1, 'r');
-    else go(curSpread - 1, 'l');
-  }
-}, { passive: true });
-
-function showLoader(msg) { lt.textContent = msg || '로딩 중…'; ldr.classList.add('on'); }
+/* ================= 알림 ================= */
+function showLoader(msg) { lt.textContent = msg || t('loading'); ldr.classList.add('on'); }
 function hideLoader() { ldr.classList.remove('on'); }
 let etimer;
 function showErr(msg) {
+  smEl.className = '';
   emEl.textContent = msg;
   emEl.className = 'on';
   clearTimeout(etimer);
@@ -1642,10 +2250,33 @@ function showErr(msg) {
 }
 let stimer;
 function showSuccess(msg) {
+  emEl.className = '';
   smEl.textContent = msg;
   smEl.className = 'on';
   clearTimeout(stimer);
-  stimer = setTimeout(() => smEl.className = '', 3000);
+  stimer = setTimeout(() => smEl.className = '', 3200);
+}
+
+/* ================= 시작 ================= */
+applyTheme(store.get('easybook-theme') === 'dark' ? 'dark' : 'light');
+if (store.get('easybook-view') === 'single') viewMode = 'single';
+applyViewModeUI();
+updateZoomUI();
+applyLanguage(store.get('easybook-lang') || 'ko');
+setScreen('land');
+
+const qp = new URLSearchParams(location.search);
+const initialPDF = qp.get('pdf');
+const initialView = qp.get('view');
+if (initialView === 'single' || initialView === 'double') { viewMode = initialView; applyViewModeUI(); }
+if (initialPDF) {
+  uiEl.value = initialPDF;
+  const restore = { viewMode };
+  const p = parseInt(qp.get('p'), 10);
+  const s = parseInt(qp.get('s'), 10);
+  if (Number.isInteger(p) && p > 0) restore.page = p;
+  else if (Number.isInteger(s) && s >= 0) restore.spread = s;
+  loadFromURL(restore);
 }
 </script>
 </body>
